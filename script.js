@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         const chordFrequencies = Math.random() > 0.5 ? generateMajor7thChordFrequencies(bassNoteFrequency) : generateMinor9thChordFrequencies(bassNoteFrequency);
 
                         // Play the 808 bass note
-                        generate808Bass(bassNoteFrequency, note.duration / 1000, 1.0); // Louder bass
+                        generate808Bass(bassNoteFrequency, note.duration / 1000, 0.5); // Louder bass
 
                         // Play the chord
                         generateChordSound(chordFrequencies, note.duration / 1000, 0.4);
@@ -401,7 +401,7 @@ document.addEventListener('DOMContentLoaded', function() {
         ctx.drawImage(images[note.image], note.endX, note.endY, note.width, note.height);
     }
 
-    function playDrumSound(type, volume = 1) {
+    function playDrumSound(type, volume = 0.7) {
         const now = audioCtx.currentTime;
         const masterGain = audioCtx.createGain();
         masterGain.gain.value = volume;
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 rimOscillator.type = 'square';
                 rimOscillator.frequency.setValueAtTime(2000, now);
-                rimGain.gain.setValueAtTime(volume * 0.5, now);
+                rimGain.gain.setValueAtTime(volume * 0.3, now);
                 rimGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 rimOscillator.start(now);
                 rimOscillator.stop(now + 0.1);
