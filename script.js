@@ -254,7 +254,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Gain envelope with attack time
         gain.gain.setValueAtTime(0, now);
         gain.gain.linearRampToValueAtTime(volume, now + 0.05); // Attack time of 50ms
-        gain.gain.exponentialRampToValueAtTime(0.5, now + duration * 0.5); // Longer sustain
+        gain.gain.exponentialRampToValueAtTime(0.5, now + duration * 0.9); // Longer sustain
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         osc.start(now);
@@ -290,7 +290,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Gain envelope
             gainNode.gain.setValueAtTime(0, now);
             gainNode.gain.linearRampToValueAtTime(volume * 0.25, now + 0.05); // Slightly longer attack (50ms)
-            gainNode.gain.linearRampToValueAtTime(volume * 0.2, now + duration * 0.5); // Sustain
+            gainNode.gain.linearRampToValueAtTime(volume * 0.2, now + duration * 0.9); // Sustain
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
 
             oscillator.start(now);
