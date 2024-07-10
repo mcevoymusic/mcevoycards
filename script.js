@@ -473,7 +473,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 hiHatFilter.connect(hiHatGain);
                 hiHatGain.connect(masterGain);
 
-                hiHatGain.gain.setValueAtTime(volume * 0.3, now);
+                hiHatGain.gain.setValueAtTime(volume * 0.5, now);
                 hiHatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
                 hiHatNoise.start(now);
@@ -488,7 +488,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 rimOscillator.type = 'square';
                 rimOscillator.frequency.setValueAtTime(2000, now);
-                rimGain.gain.setValueAtTime(volume * 0.3, now);
+                rimGain.gain.setValueAtTime(volume * 0.15, now);
                 rimGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 rimOscillator.start(now);
                 rimOscillator.stop(now + 0.1);
