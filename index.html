@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Card Rhythms</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Zetta&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="controls">
+        <label for="cardAmountDropdown">Cards:</label>
+        <select id="cardAmountDropdown">
+            <option value="3">3</option>
+            <option value="5" selected>5</option>
+            <option value="7">7</option>
+            <option value="10">10</option>
+        </select>
+
+        <label for="difficultyDropdown">Difficulty:</label>
+        <select id="difficultyDropdown">
+            <option value="beginner">Beginner</option>
+            <option value="beginnerRests">Beginner & Rests</option>
+            <option value="allNotes">All notes</option>
+            <option value="allNotesRests">All notes & rests</option>
+            <option value="beginnerNoNumbers">Beginner - No numbers</option>
+            <option value="beginnerRestsNoNumbers">Beginner & Rests - No numbers</option>
+            <option value="allNotesNoNumbers">All notes - No numbers</option>
+            <option value="allNotesRestsNoNumbers">All notes & rests - No numbers</option>
+        </select>
+
+        <button id="startGameButton">
+            <img src="C:/Users/alist/Google Drive/Online Stuff/McEvoy Method/Html/Cards with sounds/Playing cards/deal.png" alt="Deal">
+        </button>
+   <button id="replayGameButton">Replay</button>
+    </div>
+    <canvas id="gameCanvas" width="800" height="200"></canvas> <!-- Adjusted canvas height for 2 rows of cards -->
+    <script src="script.js"></script>
+</body>
+</html>

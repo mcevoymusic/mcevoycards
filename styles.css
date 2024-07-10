@@ -1,0 +1,27 @@
+body {
+    background-color: #333;
+    color: white;
+    font-family: 'Lexend Zetta', sans-serif;
+    text-align: center;
+}
+
+.controls {
+    margin: 20px;
+}
+
+canvas {
+    display: block;
+    margin: 20px auto;
+    background-color: black;
+}
+
+button {
+    background: none;
+    border: none;
+    cursor: pointer;
+}
+
+button img {
+    width: 100px;
+    height: auto;
+}
