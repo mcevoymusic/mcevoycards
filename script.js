@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const total = imageSources[difficulty].length;
         imageSources[difficulty].forEach(card => {
             let img = new Image();
-            img.src = `C:/Users/alist/Google Drive/Online Stuff/McEvoy Method/Html/Cards with sounds/Playing cards/${card.src}`;
+            img.src = `Playing cards/${card.src}`;
             img.onload = () => {
                 images[card.src] = img;
                 if (++loaded >= total) {
