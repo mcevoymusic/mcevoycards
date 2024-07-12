@@ -131,6 +131,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function startGame() {
+        fadeOutButton(startGameButton);
+        fadeOutButton(replayGameButton);
         stopPlayback();
 
         const difficulty = difficultyDropdown.value;
@@ -151,11 +153,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 notes.push({
                     image: card.src,
                     startX: canvas.width + 200,
-                    startY: 20, // Changed to 20
+                    startY: 20,
                     endX: startX + i * cardWidth,
-                    endY: 20, // Changed to 20
+                    endY: 20,
                     currentX: canvas.width + 200,
-                    currentY: 20, // Changed to 20
+                    currentY: 20,
                     width: cardWidth,
                     height: cardHeight,
                     duration: card.counts * beatDuration,
@@ -170,6 +172,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function replayGame() {
+        fadeOutButton(startGameButton);
+        fadeOutButton(replayGameButton);
         stopPlayback();
         currentCard = 0;
         requestAnimationFrame(animateDealing);
@@ -254,7 +258,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Gain envelope with attack time
         gain.gain.setValueAtTime(0, now);
         gain.gain.linearRampToValueAtTime(volume, now + 0.05); // Attack time of 50ms
-        gain.gain.exponentialRampToValueAtTime(0.5, now + duration * 0.75); // Longer sustain
+        gain.gain.exponentialRampToValueAtTime(0.5, now + duration * 0.5); // Longer sustain
         gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
 
         osc.start(now);
@@ -290,7 +294,7 @@ document.addEventListener('DOMContentLoaded', function() {
             // Gain envelope
             gainNode.gain.setValueAtTime(0, now);
             gainNode.gain.linearRampToValueAtTime(volume * 0.25, now + 0.05); // Slightly longer attack (50ms)
-            gainNode.gain.linearRampToValueAtTime(volume * 0.2, now + duration * 0.75); // Sustain
+            gainNode.gain.linearRampToValueAtTime(volume * 0.2, now + duration * 0.5); // Sustain
             gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration); // Release
 
             oscillator.start(now);
@@ -316,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 ctx.fillText(messages[index], canvas.width / 2, canvas.height - 10);
                 if (kickPattern[index]) playDrumSound('kick');
                 if (hihatPattern[index]) playDrumSound('hihat');
-                if (clickPattern[index]) playDrumSound('rim', 0.5); // Increase click volume
+                if (clickPattern[index]) playDrumSound('rim'); // Increase click volume
                 index++;
             } else {
                 clearInterval(countInInterval);
@@ -337,7 +341,7 @@ document.addEventListener('DOMContentLoaded', function() {
             if (kickPattern[beatIndex]) playDrumSound('kick');
             if (snarePattern[beatIndex]) playDrumSound('snare');
             if (hihatPattern[beatIndex]) playDrumSound('hihat');
-            if (clickPattern[beatIndex]) playDrumSound('rim', 0.5); // Increase click volume
+            if (clickPattern[beatIndex]) playDrumSound('rim'); // Increase click volume
 
             beatIndex = (beatIndex + 1) % kickPattern.length;
         }
@@ -379,6 +383,8 @@ document.addEventListener('DOMContentLoaded', function() {
                         playCards();
                     } else {
                         stopDrumBeat();
+                        fadeInButton(startGameButton);
+                        fadeInButton(replayGameButton);
                     }
                 }
             }
@@ -473,7 +479,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 hiHatFilter.connect(hiHatGain);
                 hiHatGain.connect(masterGain);
 
-                hiHatGain.gain.setValueAtTime(volume * 0.5, now);
+                hiHatGain.gain.setValueAtTime(volume * 0.3, now);
                 hiHatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
                 hiHatNoise.start(now);
@@ -488,7 +494,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 rimOscillator.type = 'square';
                 rimOscillator.frequency.setValueAtTime(2000, now);
-                rimGain.gain.setValueAtTime(volume * 0.15, now);
+                rimGain.gain.setValueAtTime(volume * 0.1, now);
                 rimGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
                 rimOscillator.start(now);
                 rimOscillator.stop(now + 0.1);
@@ -496,6 +502,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
+    function fadeOutButton(button) {
+        button.classList.add('fade-out');
+        button.classList.remove('fade-in');
+        setTimeout(() => {
+            button.style.display = 'none';
+        }, 500); // Ensure the button is hidden after the fade-out transition
+    }
+
+    function fadeInButton(button) {
+        button.style.display = 'inline';
+        button.classList.add('fade-in');
+        button.classList.remove('fade-out');
+    }
+
     startGameButton.addEventListener('click', startGame);
     replayGameButton.addEventListener('click', replayGame);
+
+    // Prevent space bar from triggering buttons
+    window.addEventListener('keydown', function(event) {
+        if (event.code === 'Space') {
+            event.preventDefault();
+        }
+    });
 });
