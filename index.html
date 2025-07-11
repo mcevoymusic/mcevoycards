@@ -3,41 +3,1437 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Card Rhythms</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Lexend+Zetta&display=swap" rel="stylesheet">
+    <title>Card Rhythms - Enhanced Rhythm Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            width: 100%;
+            max-width: 1800px;
+        }
+        
+        h1 {
+            font-size: 3.5rem;
+            color: #FFD700;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+            margin-bottom: 10px;
+            letter-spacing: 3px;
+            font-weight: 700;
+            font-family: 'Lexend Zetta', sans-serif;
+            background: linear-gradient(to right, #ff8a00, #da1b60);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+        }
+        
+        .subtitle {
+            color: #7fdbff;
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 10px rgba(127, 219, 255, 0.5);
+        }
+        
+        .game-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 30px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .left-panel, .right-panel {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .left-panel {
+            flex: 1;
+            min-width: 550px;
+            max-width: 550px;
+        }
+        
+        .right-panel {
+            flex: 1;
+            min-width: 1000px;
+            max-width: 1000px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .panel-title {
+            color: #FFD700;
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            text-align: center;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+            font-family: 'Lexend Zetta', sans-serif;
+            letter-spacing: 2px;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .control-group {
+            background: rgba(30, 30, 50, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .control-group label {
+            display: block;
+            margin-bottom: 10px;
+            color: #FFD700;
+            font-size: 1.1rem;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0, 0, 20, 0.8);
+            border: 1px solid #4a4a8a;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tempo-control {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+            background: rgba(20, 20, 40, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .tempo-display {
+            font-size: 2.4rem;
+            color: #FFD700;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            margin: 10px 0;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .tempo-slider {
+            width: 100%;
+            height: 25px;
+            -webkit-appearance: none;
+            background: linear-gradient(to right, #4CAF50, #FFC107, #F44336);
+            border-radius: 12px;
+            outline: none;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        .tempo-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #FF5722;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(255, 87, 34, 0.9);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .tempo-slider::-webkit-slider-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(255, 87, 34, 1);
+        }
+        
+        .canvas-container {
+            position: relative;
+            width: 850px;
+            height: 300px;
+            margin: 20px auto;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        canvas {
+            display: block;
+            margin: 0 auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            border-radius: 10px;
+            box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
+        }
+        
+        .buttons-container {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 0px;
+            position: relative;
+            width: 100%;
+            height: 150px;
+        }
+        
+        .fade-button {
+            opacity: 1;
+            transition: all 0.3s;
+            background: transparent;
+            border: none;
+            border-radius: 50%;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: absolute;
+            filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.7));
+        }
+        
+        #startGameButton {
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+        }
+        
+        #replayGameButton {
+            left: calc(50% + 140px);
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
+        }
+        
+        #startGameButton:hover {
+            filter: drop-shadow(0 0 25px rgba(255, 105, 180, 1));
+        }
+        
+        .fade-button img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .fade-button.fade-out {
+            opacity: 0;
+            transform: scale(0.8) translateX(-50%);
+            pointer-events: none;
+        }
+        
+        #countInDisplay {
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 15px 0;
+            font-family: 'Lexend Zetta', sans-serif;
+            font-size: 42px;
+            color: #FFD700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+            letter-spacing: 5px;
+        }
+        
+        .count-in-dash {
+            opacity: 0.3;
+            transition: all 0.1s ease-out;
+            width: 30px;
+            text-align: center;
+        }
+        
+        .count-in-dash.active {
+            opacity: 1;
+            transform: scale(1.5);
+            text-shadow: 0 0 15px rgba(255, 255, 255, 1);
+            color: #FFF;
+        }
+        
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+            gap: 20px;
+        }
+        
+        .stat-box {
+            background: rgba(30, 30, 50, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            flex: 1;
+            min-width: 200px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 3.2rem;
+            color: #FFD700;
+            font-weight: bold;
+            margin: 10px 0;
+            text-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
+            font-family: 'Orbitron', sans-serif;
+        }
+        
+        .stat-label {
+            font-size: 1.2rem;
+            color: #7fdbff;
+            text-shadow: 0 0 8px rgba(127, 219, 255, 0.5);
+        }
+        
+        .tap-area-container {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+        
+        #tapButton {
+	        width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #ff416c, #ff4b2b);
+            border: 6px solid #FFD700;
+            color: white;
+            font-size: 2rem;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 30px rgba(255, 75, 43, 0.7),
+                        inset 0 0 20px rgba(255, 255, 255, 0.3);
+            transition: all 0.1s;
+            font-family: 'Lexend Zetta', sans-serif;
+            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+        }
+        
+        #tapButton:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 20px rgba(255, 75, 43, 0.5),
+                        inset 0 0 30px rgba(0, 0, 0, 0.4);
+        }
+        
+        .instructions {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 15px;
+            padding: 25px;
+            margin: 30px 0;
+            max-width: 1800px;
+            width: 100%;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .instructions h2 {
+            color: #FFD700;
+            margin-bottom: 20px;
+            text-align: center;
+            font-size: 2.2rem;
+            font-family: 'Lexend Zetta', sans-serif;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
+        }
+        
+        .instructions-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .instruction-card {
+            background: rgba(30, 30, 50, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+        }
+        
+        .instruction-card h3 {
+            color: #FFD700;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+        }
+        
+        .instruction-card ul {
+            padding-left: 20px;
+        }
+        
+        .instruction-card li {
+            margin-bottom: 10px;
+            line-height: 1.5;
+            color: #e0e0ff;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.9rem;
+            text-align: center;
+            padding: 15px;
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+        }
+        
+        .pulse {
+            animation: pulse 0.5s ease-in-out;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+        
+        .perfect {
+            position: absolute;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #00ff00;
+            text-shadow: 0 0 15px #00ff00;
+            animation: floatUp 1.5s ease-out;
+            pointer-events: none;
+            z-index: 100;
+			bottom:50%;
+            font-family: 'Lexend Zetta', sans-serif;
+        }
+        
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-120px); }
+        }
+        
+        .level-indicator {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border: 2px solid #FFD700;
+            border-radius: 10px;
+            padding: 8px 15px;
+            font-size: 1.2rem;
+            color: #FFD700;
+            text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
+            font-family: 'Orbitron', sans-serif;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Card highlight animation */
+        @keyframes cardHighlight {
+            0% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);}
+            50% { box-shadow: 0px 0px 20px 10px rgba(255, 105, 180, 0.5);}
+            100% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);}
+        }
+        
+        .highlighted-card {
+            animation: cardHighlight 4.0s infinite;
+            border-radius: 8px;
+            position: absolute;
+            pointer-events: none;
+            z-index: 5;
+            box-sizing: border-box;
+        }
+        
+        /* Card trail effect */
+        .card-trail {
+            position: absolute;
+            width: 80px;
+            height: 120px;
+            background: rgba(255, 105, 180, 0.2);
+            border-radius: 8px;
+            z-index: -1;
+            pointer-events: none;
+            filter: blur(10px);
+            animation: fadeTrail 0.5s forwards;
+        }
+        
+        @keyframes fadeTrail {
+            0% { opacity: 0.8; transform: scale(1.1); }
+            100% { opacity: 0; transform: scale(1.2); }
+        }
+        
+        /* Card sparkle effect */
+        .card-sparkle {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 0.8s forwards;
+        }
+        
+        @keyframes sparkle {
+            0% { opacity: 1; transform: scale(0.5); }
+            100% { opacity: 0; transform: scale(1.5) translate(20px, -20px); }
+        }
+        
+        /* Deal button glow */
+        .deal-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 105, 180, 0.8), rgba(255, 105, 180, 0.2));
+            filter: blur(15px);
+            z-index: -1;
+            transition: all 0.3s;
+        }
+        
+        #startGameButton:hover .deal-glow {
+            width: 140px;
+            height: 140px;
+            filter: blur(20px);
+            background: radial-gradient(circle, rgba(255, 105, 180, 1), rgba(255, 105, 180, 0.4));
+        }
+    </style>
 </head>
 <body>
-    <div class="controls">
-        <label for="cardAmountDropdown">Cards:</label>
-        <select id="cardAmountDropdown">
-            <option value="3">3</option>
-            <option value="5" selected>5</option>
-            <option value="7">7</option>
-            <option value="10">10</option>
-        </select>
+    
+    <div class="game-container">
+        <div class="left-panel">
+            <h2 class="panel-title">MCEVOY RHYTHMS</h2>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <label for="cardAmountDropdown">CARDS</label>
+                    <select id="cardAmountDropdown">
+                        <option value="3">3 Cards</option>
+                        <option value="5" selected>5 Cards</option>
+                        <option value="7">7 Cards</option>
+                        <option value="10">10 Cards</option>
+                    </select>
+                </div>
+                
+                <div class="control-group">
+                    <label for="difficultyDropdown">DIFFICULTY</label>
+                    <select id="difficultyDropdown">
+                        <option value="beginner">Beginner</option>
+                        <option value="beginnerRests">Beginner & Rests</option>
+                        <option value="allNotes">All notes</option>
+                        <option value="allNotesRests">All notes & rests</option>
+                        <option value="beginnerNoNumbers">Beginner (No numbers)</option>
+                        <option value="beginnerRestsNoNumbers">Beginner & Rests (No numbers)</option>
+                        <option value="allNotesNoNumbers">All notes (No numbers)</option>
+                        <option value="allNotesRestsNoNumbers">All notes & rests (No numbers)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="tempo-control">
+                <label for="tempoSlider">TEMPO</label>
+                <div class="tempo-display"><span id="tempoValue">120</span> BPM</div>
+                <input type="range" id="tempoSlider" class="tempo-slider" min="40" max="200" value="120">
+            </div>
+            
+            <div class="game-stats">
+                <div class="stat-box">
+                    <div class="stat-label">SCORE</div>
+                    <div class="stat-value" id="scoreValue">0</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-label">TIME LEFT</div>
+                    <div class="stat-value" id="timerValue">05:00</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="right-panel">
+            <h2 class="panel-title">GAME BOARD</h2>
+            
+            <div class="canvas-container">
+                <canvas id="gameCanvas" width="850" height="200"></canvas>
+ 
+                <div class="buttons-container">
+                    <button id="startGameButton" class="fade-button">
+                        <div class="deal-glow"></div>
+                        <img src="Playing cards/deal.png" alt="Deal">
+                    </button>
+                    <button id="replayGameButton" class="fade-button fade-out">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI4IiBmaWxsPSIjZmZkNzAwIj48cGF0aCBkPSJNMTcuNjUgNi4zNUMxNi4yIDQuOSAxNC4yMSA0IDEyIDRjLTQuNDIgMC03Ljk5IDMuNTgtNy45OSA4czMuNTcgOCA3Ljk5IDhjMy43MyAwIDYuODQtMi41NSA3LjczLTZoLTIuMDhjLS44MiAyLjMzLTMuMDQgNC01LjY1IDQtMy4zMSAwLTYtMi42OS02LTZzMi42OS02IDYtNmMxLjY2IDAgMy4xNC42OSA0LjIyIDEuNzhMMTMgMTFoN1Y0bC0yLjM1IDIuMzV6Ii8+PC9zdmc+" alt="Replay">
+                    </button>
+				</div>
 
-        <label for="difficultyDropdown">Difficulty:</label>
-        <select id="difficultyDropdown">
-            <option value="beginner">Beginner</option>
-            <option value="beginnerRests">Beginner & Rests</option>
-            <option value="allNotes">All notes</option>
-            <option value="allNotesRests">All notes & rests</option>
-            <option value="beginnerNoNumbers">Beginner - No numbers</option>
-            <option value="beginnerRestsNoNumbers">Beginner & Rests - No numbers</option>
-            <option value="allNotesNoNumbers">All notes - No numbers</option>
-            <option value="allNotesRestsNoNumbers">All notes & rests - No numbers</option>
-        </select>
+            </div>
+			<div class="level-indicator">Level: <span id="levelIndicator">Beginner</span></div>
+            <div id="countInDisplay"></div>
+            <div class="tap-area-container">
+                <button id="tapButton">TAP</button>
+            </div>
+            
+            
+        </div>
     </div>
-    <div class="canvas-container">
-        <button id="startGameButton" class="fade-button">
-            <img src="Playing cards/deal.png" alt="Deal">
-        </button>
-        <button id="replayGameButton" class="fade-button">
-            <img src="Playing cards/replay.png" alt="Replay">
-        </button>
-        <canvas id="gameCanvas" width="800" height="200"></canvas>
+    
+    <div class="instructions">
+        <h2>HOW TO PLAY</h2>
+        <div class="instructions-content">
+            <div class="instruction-card">
+                <h3>GAME RULES</h3>
+                <ul>
+                    <li>Set your desired tempo using the slider (40-200 BPM)</li>
+                    <li>Choose the number of cards and difficulty level</li>
+                    <li>Click DEAL to start the rhythm sequence</li>
+                    <li>Listen to the rhythm pattern played by the cards</li>
+                </ul>
+            </div>
+            <div class="instruction-card">
+                <h3>SCORING</h3>
+                <ul>
+                    <li>Tap the TAP button when each card starts playing</li>
+                    <li>+100 points for tapping within 100ms of the beat</li>
+                    <li>-10 points for tapping at the wrong time</li>
+                    <li>Score multiplies with higher difficulty levels</li>
+                    <li>Score as many points as possible in 5 minutes!</li>
+                </ul>
+            </div>
+            <div class="instruction-card">
+                <h3>RHYTHM CARDS</h3>
+                <ul>
+                    <li>Each card represents a musical rhythm</li>
+                    <li>Cards show note durations (whole, half, quarter, etc.)</li>
+                    <li>Some cards include rests (silent beats)</li>
+                    <li>Higher difficulties add more complex rhythms</li>
+                </ul>
+            </div>
+            <div class="instruction-card">
+                <h3>TIPS</h3>
+                <ul>
+                    <li>Start at lower tempos to build your rhythm skills</li>
+                    <li>Focus on the drum beat to keep your timing</li>
+                    <li>Watch for the card highlight to know when to tap</li>
+                    <li>Practice regularly to improve your rhythm accuracy</li>
+                </ul>
+            </div>
+        </div>
     </div>
-    <script src="script.js"></script>
+    
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const startGameButton = document.getElementById('startGameButton');
+            const replayGameButton = document.getElementById('replayGameButton');
+            const cardAmountDropdown = document.getElementById('cardAmountDropdown');
+            const difficultyDropdown = document.getElementById('difficultyDropdown');
+            const tempoSlider = document.getElementById('tempoSlider');
+            const tempoValue = document.getElementById('tempoValue');
+            const countInDisplay = document.getElementById('countInDisplay');
+            const tapButton = document.getElementById('tapButton');
+            const scoreValue = document.getElementById('scoreValue');
+            const timerValue = document.getElementById('timerValue');
+            const levelIndicator = document.getElementById('levelIndicator');
+            const canvasContainer = document.querySelector('.canvas-container');
+
+            // Difficulty multipliers
+            const difficultyMultipliers = {
+                'beginner': 1,
+                'beginnerRests': 1.5,
+                'allNotes': 2,
+                'allNotesRests': 2.5,
+                'beginnerNoNumbers': 1.2,
+                'beginnerRestsNoNumbers': 1.7,
+                'allNotesNoNumbers': 2.2,
+                'allNotesRestsNoNumbers': 3
+            };
+            
+            let bpm = 120;
+            let beatDuration = 60000 / bpm;
+            let countValue;
+            let score = 0;
+            let gameTime = 5 * 60; // 5 minutes in seconds
+            let timerInterval;
+            let isGameActive = false;
+            let tapWindowStart = 0;
+            let tapWindowEnd = 0;
+            let timerStarted = false;
+            let currentDifficulty = 'beginner';
+
+            let images = {};
+            let notes = [];
+            let currentCard = 0;
+            let drumBeatInterval;
+            let playCardInterval;
+            let countInInterval;
+            let cardPositions = [];
+            let activeHighlights = [];
+
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+
+            // Set tempo from slider
+            function setTempo() {
+                bpm = parseInt(tempoSlider.value);
+                beatDuration = 60000 / bpm;
+            }
+
+            // Update tempo display
+            tempoSlider.addEventListener('input', () => {
+                tempoValue.textContent = tempoSlider.value;
+                setTempo();
+            });
+
+            // Initialize tempo
+            setTempo();
+
+            // Update score display
+            function updateScore(points) {
+                const multiplier = difficultyMultipliers[currentDifficulty] || 1;
+                const actualPoints = Math.round(points * multiplier);
+                
+                score += actualPoints;
+                scoreValue.textContent = score;
+                
+                if (actualPoints > 0) {
+                    const perfectText = document.createElement('div');
+                    perfectText.className = 'perfect';
+                    perfectText.textContent = `+${actualPoints} PERFECT!`;
+                    perfectText.style.left = `${Math.random() * 70 + 15}%`;
+                    document.body.appendChild(perfectText);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(perfectText);
+                    }, 1500);
+                }
+            }
+
+            // Start game timer
+            function startGameTimer() {
+                if (!timerStarted) {
+                    timerStarted = true;
+                    clearInterval(timerInterval);
+                    gameTime = 5 * 60; // 5 minutes
+                    timerValue.textContent = formatTime(gameTime);
+                    
+                    timerInterval = setInterval(() => {
+                        gameTime--;
+                        timerValue.textContent = formatTime(gameTime);
+                        
+                        if (gameTime <= 0) {
+                            clearInterval(timerInterval);
+                            isGameActive = false;
+                            timerStarted = false;
+                            stopPlayback();
+                            alert(`Game Over! Your final score is: ${score}`);
+                        }
+                    }, 1000);
+                }
+            }
+
+            // Format time as MM:SS
+            function formatTime(seconds) {
+                const mins = Math.floor(seconds / 60);
+                const secs = seconds % 60;
+                return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+            }
+
+            // Handle tap
+            tapButton.addEventListener('click', handleTap);
+            document.addEventListener('keydown', (e) => {
+                if (e.code === 'Space') {
+                    e.preventDefault();
+                    handleTap();
+                    tapButton.classList.add('pulse');
+                    setTimeout(() => tapButton.classList.remove('pulse'), 100);
+                }
+            });
+
+            function handleTap() {
+                if (!isGameActive) return;
+                
+                const now = Date.now();
+                
+                if (now >= tapWindowStart && now <= tapWindowEnd) {
+                    // Perfect timing (100ms window)
+                    updateScore(100);
+                } else if (now < tapWindowStart - 100 || now > tapWindowEnd + 100) {
+                    // Wrong timing (outside window)
+                    updateScore(-10);
+                }
+            }
+
+            // Original card images
+            const imageSources = {
+                'beginner': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 }
+                ],
+                'beginnerRests': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 },
+                    { src: 'Rest1.png', counts: 8, silence: true },
+                    { src: 'Rest12.png', counts: 4, silence: true },
+                    { src: 'Rest14.png', counts: 2, silence: true }
+                ],
+                'allNotes': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 },
+                    { src: '14D.png', counts: 3 },
+                    { src: '18.png', counts: 1 }
+                ],
+                'allNotesRests': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 },
+                    { src: '14D.png', counts: 3 },
+                    { src: '18.png', counts: 1 },
+                    { src: 'Rest1.png', counts: 8, silence: true },
+                    { src: 'Rest12.png', counts: 4, silence: true },
+                    { src: 'Rest14.png', counts: 2, silence: true },
+                    { src: 'Rest14D.png', counts: 3, silence: true },
+                    { src: 'Rest18.png', counts: 1, silence: true }
+                ],
+                'beginnerNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 }
+                ],
+                'beginnerRestsNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 },
+                    { src: 'NonoRest1.png', counts: 8, silence: true },
+                    { src: 'NonoRest12.png', counts: 4, silence: true },
+                    { src: 'NonoRest14.png', counts: 2, silence: true }
+                ],
+                'allNotesNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 },
+                    { src: 'Nono14D.png', counts: 3 },
+                    { src: 'Nono18.png', counts: 1 }
+                ],
+                'allNotesRestsNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 },
+                    { src: 'Nono14D.png', counts: 3 },
+                    { src: 'Nono18.png', counts: 1 },
+                    { src: 'NonoRest1.png', counts: 8, silence: true },
+                    { src: 'NonoRest12.png', counts: 4, silence: true },
+                    { src: 'NonoRest14.png', counts: 2, silence: true },
+                    { src: 'NonoRest14D.png', counts: 3, silence: true },
+                    { src: 'NonoRest18.png', counts: 1, silence: true }
+                ]
+            };
+
+            function preloadImages(difficulty, callback) {
+                images = {};
+                let loaded = 0;
+                const total = imageSources[difficulty].length;
+                
+                imageSources[difficulty].forEach(card => {
+                    let img = new Image();
+                    img.src = `Playing cards/${card.src}`;
+                    img.onload = () => {
+                        images[card.src] = img;
+                        if (++loaded >= total) {
+                            callback();
+                        }
+                    };
+                    img.onerror = () => {
+                        // Fallback to placeholder if image not found
+                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
+                        images[card.src] = img;
+                        if (++loaded >= total) {
+                            callback();
+                        }
+                    };
+                });
+            }
+
+            function startGame() {
+                fadeOutButton(startGameButton);
+                fadeOutButton(replayGameButton);
+                stopPlayback();
+                
+                currentDifficulty = difficultyDropdown.value;
+                levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
+                
+                if (!timerStarted) {
+                    score = 0;
+                    scoreValue.textContent = "0";
+                }
+                
+                isGameActive = true;
+                startGameTimer();
+
+                setTempo();
+                countValue = bpm * 2;
+
+                const numberOfCards = parseInt(cardAmountDropdown.value, 10);
+                preloadImages(currentDifficulty, () => {
+                    notes = [];
+                    cardPositions = [];
+                    const cardWidth = 80;
+                    const cardHeight = 120;
+                    const totalWidth = numberOfCards * cardWidth;
+                    const startX = (canvas.width - totalWidth) / 2;
+
+                    for (let i = 0; i < numberOfCards; i++) {
+                        let card = imageSources[currentDifficulty][Math.floor(Math.random() * imageSources[currentDifficulty].length)];
+                        const endX = startX + i * cardWidth;
+                        notes.push({
+                            image: card.src,
+                            startX: canvas.width + 200,
+                            startY: 20,
+                            endX: endX,
+                            endY: 20,
+                            currentX: canvas.width + 200,
+                            currentY: 20,
+                            width: cardWidth,
+                            height: cardHeight,
+                            duration: card.counts * beatDuration,
+                            counts: card.counts,
+                            repeat: card.repeat || 1,
+                            silence: card.silence || false,
+                            rotation: Math.random() * 10 - 5, // Random rotation between -5 and 5 degrees
+                            scale: 1,
+                            glow: 0
+                        });
+                        // Store final position
+                        cardPositions.push({x: endX, y: 20, width: cardWidth, height: cardHeight});
+                    }
+                    currentCard = 0;
+                    requestAnimationFrame(animateDealing);
+                });
+            }
+
+            function replayGame() {
+                fadeOutButton(startGameButton);
+                fadeOutButton(replayGameButton);
+                stopPlayback();
+                currentCard = 0;
+                requestAnimationFrame(animateDealing);
+            }
+
+            function stopPlayback() {
+                clearInterval(drumBeatInterval);
+                clearTimeout(playCardInterval);
+                clearInterval(countInInterval);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Remove any existing highlights
+                document.querySelectorAll('.highlighted-card').forEach(el => el.remove());
+                activeHighlights = [];
+            }
+
+            function animateDealing() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                let anyCardMoving = false;
+                const now = Date.now();
+                
+                notes.forEach((note, index) => {
+                    if (note.currentX > note.endX) {
+                        // Dynamic easing based on card position
+                        const progress = 1 - (note.currentX - note.endX) / (canvas.width - note.endX + 200);
+                        const speed = 20 + 10 * Math.sin(progress * Math.PI);
+                        
+                        note.currentX -= speed;
+                        anyCardMoving = true;
+                        
+                        // Rotation effect (oscillate)
+                        note.rotation = 5 * Math.sin(now / 100 + index);
+                        
+                        // Scale effect (subtle pulse)
+                        note.scale = 0.95 + 0.05 * Math.cos(now / 150 + index);
+                        
+                        // Create trail effect (occasionally)
+                        if (Math.random() < 0.3) {
+                            createCardTrail(note);
+                        }
+                        
+                        // Create sparkle effect (occasionally)
+                        if (Math.random() < 0.1) {
+                            createSparkle(note);
+                        }
+                    }
+                    
+                    // Save current context
+                    ctx.save();
+                    
+                    // Move to card center
+                    ctx.translate(
+                        note.currentX + note.width / 2,
+                        note.currentY + note.height / 2
+                    );
+                    
+                    // Apply rotation and scale
+                    ctx.rotate(note.rotation * Math.PI / 180);
+                    ctx.scale(note.scale, note.scale);
+                    
+                    // Draw card
+                    ctx.drawImage(
+                        images[note.image],
+                        -note.width / 2,
+                        -note.height / 2,
+                        note.width,
+                        note.height
+                    );
+                    
+                    // Restore context
+                    ctx.restore();
+                });
+
+                if (anyCardMoving) {
+                    requestAnimationFrame(animateDealing);
+                } else {
+                    performCountIn();
+                }
+            }
+
+            function createCardTrail(note) {
+                const trail = document.createElement('div');
+                trail.className = 'card-trail';
+                trail.style.left = `${note.currentX + 370}px`; // Adjust for canvas position
+                trail.style.top = `${note.currentY + 140}px`; // Adjust for canvas position
+                trail.style.width = `${note.width}px`;
+                trail.style.height = `${note.height}px`;
+                document.querySelector('.canvas-container').appendChild(trail);
+                
+                setTimeout(() => {
+                    if (trail.parentNode) {
+                        trail.parentNode.removeChild(trail);
+                    }
+                }, 500);
+            }
+            
+            function createSparkle(note) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'card-sparkle';
+                sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`; // Adjust for canvas position
+                sparkle.style.top = `${note.currentY + Math.random() * note.height + 140}px`; // Adjust for canvas position
+                document.querySelector('.canvas-container').appendChild(sparkle);
+                
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 800);
+            }
+
+            function generateMajor7thChordFrequencies(rootFrequency) {
+                const octave = 2;
+                const majorThird = rootFrequency * Math.pow(2, (4 / 12)) * octave;
+                const perfectFifth = rootFrequency * Math.pow(2, (7 / 12)) * octave;
+                const majorSeventh = rootFrequency * Math.pow(2, (11 / 12)) * octave;
+                return [majorThird, perfectFifth, majorSeventh];
+            }
+
+            function generateMinor9thChordFrequencies(rootFrequency) {
+                const octave = 2;
+                const minorThird = rootFrequency * Math.pow(2, (3 / 12)) * octave;
+                const perfectFifth = rootFrequency * Math.pow(2, (7 / 12)) * octave;
+                const minorSeventh = rootFrequency * Math.pow(2, (10 / 12)) * octave;
+                const ninth = rootFrequency * Math.pow(2, (14 / 12)) * octave;
+                return [minorThird, perfectFifth, minorSeventh, ninth];
+            }
+
+            function getRandomBassNoteFrequency() {
+                const notes = [
+                    82.41,
+                    87.31,
+                    92.50,
+                    98.00,
+                    103.83,
+                    110.00,
+                    116.54,
+                    123.47,
+                    130.81,
+                    138.59,
+                    146.83,
+                    155.56,
+                    164.81,
+                    174.61
+                ];
+                const randomIndex = Math.floor(Math.random() * notes.length);
+                return Math.max(notes[randomIndex], 98.00);
+            }
+
+            function generate808Bass(frequency, duration, volume = 1) {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(frequency, now);
+                osc.frequency.exponentialRampToValueAtTime(frequency / 2, now + 0.1);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(volume, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.5, now + duration * 0.5);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                osc.start(now);
+                osc.stop(now + duration);
+            }
+
+            function generateChordSound(frequencies, duration, volume = 1) {
+                const now = audioCtx.currentTime;
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.value = volume * 0.25;
+                masterGain.connect(audioCtx.destination);
+
+                frequencies.forEach(frequency => {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(masterGain);
+
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, now);
+
+                    const tremolo = audioCtx.createOscillator();
+                    tremolo.frequency.setValueAtTime(5, now);
+                    const tremoloGain = audioCtx.createGain();
+                    tremoloGain.gain.setValueAtTime(0.5, now);
+
+                    tremolo.connect(tremoloGain.gain);
+                    gainNode.connect(tremoloGain);
+                    tremoloGain.connect(masterGain);
+
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(volume * 0.25, now + 0.05);
+                    gainNode.gain.linearRampToValueAtTime(volume * 0.2, now + duration * 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                    oscillator.start(now);
+                    tremolo.start(now);
+                    oscillator.stop(now + duration);
+                    tremolo.stop(now + duration);
+                });
+            }
+
+            function performCountIn() {
+                const dashCount = 8;
+                let currentDash = 0;
+                
+                // Create dashes
+                createDashes(dashCount);
+                
+                countInInterval = setInterval(() => {
+                    const dashes = document.querySelectorAll('.count-in-dash');
+                    dashes.forEach(dash => dash.classList.remove('active'));
+                    
+                    if (currentDash < dashCount) {
+                        dashes[currentDash].classList.add('active');
+                        playDrumSound('rim', 0.3);
+                        currentDash++;
+                    } else {
+                        // Count-in complete
+                        clearInterval(countInInterval);
+                        countInDisplay.innerHTML = '';
+                        startDrumBeatAndPlayCards();
+                    }
+                }, beatDuration); // Slower count-in
+            }
+
+            function createDashes(count) {
+                countInDisplay.innerHTML = '';
+                for (let i = 0; i < count; i++) {
+                    const dash = document.createElement('div');
+                    dash.className = 'count-in-dash';
+                    dash.textContent = '-';
+                    countInDisplay.appendChild(dash);
+                }
+            }
+
+            function startDrumBeatAndPlayCards() {
+                const kickPattern = [1, 0, 0, 0, 1, 0, 0, 0];
+                const snarePattern = [0, 0, 1, 0, 0, 0, 1, 0];
+                const hihatPattern = [1, 1, 1, 1, 1, 1, 1, 1];
+                const clickPattern = [1, 1, 1, 1, 1, 1, 1, 1];
+                let beatIndex = 0;
+
+                function playNextBeat() {
+                    if (kickPattern[beatIndex]) playDrumSound('kick');
+                    if (snarePattern[beatIndex]) playDrumSound('snare');
+                    if (hihatPattern[beatIndex]) playDrumSound('hihat');
+                    if (clickPattern[beatIndex]) playDrumSound('rim');
+                    beatIndex = (beatIndex + 1) % kickPattern.length;
+                }
+
+                playNextBeat();
+                playCards();
+
+                drumBeatInterval = setInterval(playNextBeat, beatDuration);
+            }
+
+            function stopDrumBeat() {
+                clearInterval(drumBeatInterval);
+            }
+
+            function playCards() {
+                if (currentCard < notes.length) {
+                    const note = notes[currentCard];
+                    
+                    let repeatCount = 0;
+                    
+                    function playNote() {
+                        if (repeatCount < note.repeat) {
+                            // Highlight the card for this repeat
+                            highlightCard(currentCard, repeatCount);
+                            
+                            // Set tap window for this card (wider window - 100ms)
+                            tapWindowStart = Date.now() + 50; // Add small delay for visual sync
+                            tapWindowEnd = tapWindowStart + 100; // 100ms window
+                            
+                            if (!note.silence) {
+                                const bassNoteFrequency = getRandomBassNoteFrequency();
+                                const chordFrequencies = Math.random() > 0.5 ? 
+                                    generateMajor7thChordFrequencies(bassNoteFrequency) : 
+                                    generateMinor9thChordFrequencies(bassNoteFrequency);
+
+                                generate808Bass(bassNoteFrequency, note.duration / 1000, 0.5);
+                                generateChordSound(chordFrequencies, note.duration / 1000, 0.4);
+                            }
+                            
+                            repeatCount++;
+                            
+                            // Schedule next repeat or move to next card
+                            if (repeatCount < note.repeat) {
+                                setTimeout(playNote, note.duration);
+                            } else {
+                                setTimeout(() => {
+                                    clearHighlight(currentCard);
+                                    currentCard++;
+                                    if (currentCard < notes.length) {
+                                        playCards();
+                                    } else {
+                                        stopDrumBeat();
+                                        fadeInButton(startGameButton);
+                                        fadeInButton(replayGameButton);
+                                    }
+                                }, note.duration);
+                            }
+                        }
+                    }
+                    
+                    playNote();
+                }
+            }
+
+            
+			function highlightCard(index, repeatIndex) {
+				const note = notes[index];
+				const canvas = document.getElementById('gameCanvas');
+				const canvasContainer = document.querySelector('.canvas-container');
+				
+				// Get canvas position relative to its container
+				const canvasRect = canvas.getBoundingClientRect();
+				const containerRect = canvasContainer.getBoundingClientRect();
+				const canvasOffsetX = canvasRect.left - containerRect.left;
+				const canvasOffsetY = canvasRect.top - containerRect.top;
+				
+				// Calculate card's center position in container coordinates
+				const cardCenterX = note.currentX + note.width/2 + canvasOffsetX;
+				const cardCenterY = note.currentY + note.height/2 + canvasOffsetY;
+				
+				// Create highlight element
+				const highlightDiv = document.createElement('div');
+				highlightDiv.className = 'highlighted-card';
+				highlightDiv.style.position = 'absolute';
+				
+				// Position highlight at card's center
+				highlightDiv.style.left = `${cardCenterX}px`;
+				highlightDiv.style.top = `${cardCenterY}px`;
+				
+				// Apply dimensions based on card's scale
+				const highlightScale = note.scale * 0.92;
+				highlightDiv.style.width = `${note.width * highlightScale}px`;
+				highlightDiv.style.height = `${note.height * highlightScale}px`;
+				
+				// Apply rotation transformation
+				highlightDiv.style.transform = `translate(-50%, -50%) rotate(${note.rotation}deg)`;
+				
+				highlightDiv.style.pointerEvents = 'none';
+				highlightDiv.style.zIndex = '5';
+				highlightDiv.dataset.index = `${index}-${repeatIndex}`;
+				
+				canvasContainer.appendChild(highlightDiv);
+				activeHighlights.push(highlightDiv);
+			}
+
+            function clearHighlight(index) {
+                // Remove all highlights for this card
+                activeHighlights = activeHighlights.filter(highlight => {
+                    const [cardIndex] = highlight.dataset.index.split('-');
+                    if (parseInt(cardIndex) === index) {
+                        if (highlight.parentNode) {
+                            highlight.parentNode.removeChild(highlight);
+                        }
+                        return false;
+                    }
+                    return true;
+                });
+            }
+
+            function playDrumSound(type, volume = 0.7) {
+                const now = audioCtx.currentTime;
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.value = volume;
+                masterGain.connect(audioCtx.destination);
+
+                switch (type) {
+                    case 'kick':
+                        const kickOscillator = audioCtx.createOscillator();
+                        const kickGain = audioCtx.createGain();
+                        kickOscillator.connect(kickGain);
+                        kickGain.connect(masterGain);
+
+                        kickOscillator.type = 'sine';
+                        kickOscillator.frequency.setValueAtTime(150, now);
+                        kickOscillator.frequency.exponentialRampToValueAtTime(0.01, now + 0.5);
+                        kickGain.gain.setValueAtTime(volume, now);
+                        kickGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+                        kickOscillator.start(now);
+                        kickOscillator.stop(now + 0.5);
+                        break;
+
+                    case 'snare':
+                        const snareNoise = audioCtx.createBufferSource();
+                        const bufferSize = audioCtx.sampleRate;
+                        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+                        const data = buffer.getChannelData(0);
+                        for (let i = 0; i < bufferSize; i++) {
+                            data[i] = Math.random() * 2 - 1;
+                        }
+                        snareNoise.buffer = buffer;
+
+                        const snareGain = audioCtx.createGain();
+                        snareNoise.connect(snareGain);
+                        snareGain.connect(masterGain);
+
+                        snareGain.gain.setValueAtTime(volume, now);
+                        snareGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
+                        const snareOscillator = audioCtx.createOscillator();
+                        snareOscillator.type = 'triangle';
+                        snareOscillator.frequency.setValueAtTime(200, now);
+                        snareOscillator.connect(snareGain);
+                        snareGain.gain.setValueAtTime(volume, now);
+                        snareGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
+                        snareNoise.start(now);
+                        snareNoise.stop(now + 0.2);
+                        snareOscillator.start(now);
+                        snareOscillator.stop(now + 0.1);
+                        break;
+
+                    case 'hihat':
+                        const hiHatNoise = audioCtx.createBufferSource();
+                        const hiHatBufferSize = audioCtx.sampleRate;
+                        const hiHatBuffer = audioCtx.createBuffer(1, hiHatBufferSize, audioCtx.sampleRate);
+                        const hiHatData = hiHatBuffer.getChannelData(0);
+                        for (let i = 0; i < hiHatBufferSize; i++) {
+                            hiHatData[i] = Math.random() * 2 - 1;
+                        }
+                        hiHatNoise.buffer = hiHatBuffer;
+
+                        const hiHatFilter = audioCtx.createBiquadFilter();
+                        hiHatFilter.type = 'highpass';
+                        hiHatFilter.frequency.setValueAtTime(10000, now);
+                        hiHatFilter.Q.setValueAtTime(1, now);
+
+                        const hiHatGain = audioCtx.createGain();
+                        hiHatNoise.connect(hiHatFilter);
+                        hiHatFilter.connect(hiHatGain);
+                        hiHatGain.connect(masterGain);
+
+                        hiHatGain.gain.setValueAtTime(volume * 0.3, now);
+                        hiHatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
+                        hiHatNoise.start(now);
+                        hiHatNoise.stop(now + 0.1);
+                        break;
+
+                    case 'rim':
+                        const rimOscillator = audioCtx.createOscillator();
+                        const rimGain = audioCtx.createGain();
+                        rimOscillator.connect(rimGain);
+                        rimGain.connect(masterGain);
+
+                        rimOscillator.type = 'square';
+                        rimOscillator.frequency.setValueAtTime(2000, now);
+                        rimGain.gain.setValueAtTime(volume * 0.1, now);
+                        rimGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                        rimOscillator.start(now);
+                        rimOscillator.stop(now + 0.1);
+                        break;
+                }
+            }
+
+            function fadeOutButton(button) {
+                button.classList.add('fade-out');
+                button.classList.remove('fade-in');
+            }
+
+            function fadeInButton(button) {
+                button.classList.add('fade-in');
+                button.classList.remove('fade-out');
+            }
+
+            startGameButton.addEventListener('click', startGame);
+            replayGameButton.addEventListener('click', replayGame);
+            
+            // Update level indicator on difficulty change
+            difficultyDropdown.addEventListener('change', function() {
+                levelIndicator.textContent = this.options[this.selectedIndex].text;
+            });
+            
+            // Initialize level indicator
+            levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
+        });
+    </script>
 </body>
 </html>
