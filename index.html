@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>McEvoy Rhythms</title>
+    <title>Card Rhythms - Enhanced Rhythm Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
@@ -470,7 +470,7 @@
         /* Card trail effect */
         .card-trail {
             position: absolute;
-            width: 80px;
+            width: 500px;
             height: 120px;
             background: rgba(255, 105, 180, 0.2);
             border-radius: 8px;
@@ -1474,7 +1474,7 @@
                 const trail = document.createElement('div');
                 trail.className = 'card-trail';
                 trail.style.left = `${note.currentX + 370}px`; // Adjust for canvas position
-                trail.style.top = `${note.currentY + 140}px`; // Adjust for canvas position
+                trail.style.top = `${note.currentY + 20}px`; // Adjust for canvas position
                 trail.style.width = `${note.width}px`;
                 trail.style.height = `${note.height}px`;
                 document.querySelector('.canvas-container').appendChild(trail);
@@ -1490,7 +1490,7 @@
                 const sparkle = document.createElement('div');
                 sparkle.className = 'card-sparkle';
                 sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`; // Adjust for canvas position
-                sparkle.style.top = `${note.currentY + Math.random() * note.height + 140}px`; // Adjust for canvas position
+                sparkle.style.top = `${note.currentY + Math.random() * note.height + 20}px`; // Adjust for canvas position
                 document.querySelector('.canvas-container').appendChild(sparkle);
                 
                 setTimeout(() => {
@@ -1609,7 +1609,7 @@
                     
                     if (currentDash < dashCount) {
                         dashes[currentDash].classList.add('active');
-                        playDrumSound('rim', 0.3);
+                        playDrumSound('rim', 1.1);
                         currentDash++;
                     } else {
                         // Count-in complete
