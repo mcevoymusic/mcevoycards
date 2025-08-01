@@ -340,40 +340,41 @@
             playerNameInput.focus();
         }
         
-		function saveScore() {
-            const playerName = playerNameInput.value.trim();
-            if (!playerName) {
-                playerNameInput.style.borderColor = '#ff6b6b';
-                playerNameInput.placeholder = 'Please enter your name!';
-                return;
-            }
-
-            const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
-
-            // --- MODIFICATION --- Send the gameLog instead of tapTimes
-            const payload = {
-                name: playerName,
-                notes: notes,
-                bpm: bpm,
-                gameLog: gameLog 
-            };
-            
-            // This is the correct call for the v8 SDK
-            saveScoreFunction(payload)
-                .then((result) => {
-                    nameModal.style.display = 'none';
-                    playerNameInput.value = '';
-                    const validatedScore = result.data.score;
-                    alert(`Score of ${validatedScore} saved successfully!`);
-                    if (isLeaderboardVisible) {
-                        loadLeaderboard();
-                    }
-                })
-                .catch((error) => {
-                    console.error("Error saving score (from client):", error);
-                    alert(`Error saving score: ${error.message}`);
-                });
-        }
+	function saveScore() {
+		    const playerName = playerNameInput.value.trim();
+		    if (!playerName) {
+		        playerNameInput.style.borderColor = '#ff6b6b';
+		        playerNameInput.placeholder = 'Please enter your name!';
+		        return;
+		    }
+		
+		    const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
+		
+		    // --- MODIFICATION --- Send the gameLog instead of tapTimes
+		    const payload = {
+		        name: playerName,
+		        notes: notes,
+		        bpm: bpm,
+		        gameLog: gameLog 
+		    };
+		    
+		    // This is the correct call for the v8 SDK
+		    saveScoreFunction(payload)
+		        .then((result) => { // <-- THIS PARAMETER WAS MISSING
+		            nameModal.style.display = 'none';
+		            playerNameInput.value = '';
+		            // The server returns the validated score, which we can show the user
+		            const validatedScore = result.data.score;
+		            alert(`Score of ${validatedScore} saved successfully!`);
+		            if (isLeaderboardVisible) {
+		                loadLeaderboard();
+		            }
+		        })
+		        .catch((error) => {
+		            console.error("Error saving score (from client):", error);
+		            alert(`Error saving score: ${error.message}`);
+		        });
+		}
         
         saveScoreBtn.addEventListener('click', saveScore);
         cancelSaveBtn.addEventListener('click', () => { nameModal.style.display = 'none'; playerNameInput.value = ''; });
@@ -845,3 +846,4 @@
     </script>
 </body>
 </html>
+
