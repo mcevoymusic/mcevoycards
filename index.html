@@ -1040,28 +1040,30 @@
 
 			const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
 
-			// The payload now includes everything the server needs to validate the game
 			const payload = {
 				name: playerName,
 				difficulty: currentDifficulty,
 				tapTimes: tapTimes,
-				notes: notes, // <-- ADDED
-				bpm: bpm      // <-- ADDED
+				notes: notes,
+				bpm: bpm
 			};
 
-			saveScoreFunction({ data: payload }) // <-- IMPORTANT: Wrap the payload in a 'data' object
-			.then(() => {
-				nameModal.style.display = 'none';
-				playerNameInput.value = '';
-				alert('Score saved successfully!');
-				if (isLeaderboardVisible) {
-					loadLeaderboard();
-				}
-			})
-			.catch((error) => {
-				console.error("Error saving score:", error);
-				alert(`Error saving score: ${error.message}`);
-			});
+			// --- THIS IS THE CRITICAL FIX ---
+			// We must wrap our 'payload' object inside another object with a 'data' key.
+			// This matches the structure the server is expecting.
+			saveScoreFunction({ data: payload })
+				.then(() => {
+					nameModal.style.display = 'none';
+					playerNameInput.value = '';
+					alert('Score saved successfully!');
+					if (isLeaderboardVisible) {
+						loadLeaderboard();
+					}
+				})
+				.catch((error) => {
+					console.error("Error saving score:", error);
+					alert(`Error saving score: ${error.message}`);
+				});
 		}
         
         // Event listeners
@@ -1118,7 +1120,7 @@
             let beatDuration = 60000 / bpm;
             let countValue;
             let score = 0;
-            let gameTime = 10; // 5 minutes in seconds
+            let gameTime = 5 * 60; // 5 minutes in seconds
             let timerInterval;
             let isGameActive = false;
             let tapWindowStart = 0;
@@ -1176,7 +1178,7 @@
                 if (!timerStarted) {
                     timerStarted = true;
                     clearInterval(timerInterval);
-                    gameTime = 10; // 5 minutes
+                    gameTime = 5 * 60; // 5 minutes
                     timerValue.textContent = formatTime(gameTime);
                     timerInterval = setInterval(() => {
                         gameTime--;
