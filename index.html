@@ -5,10 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Rhythms - Enhanced Rhythm Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
-    <!-- FINAL SCRIPT TAGS: Using stable Firebase v8 -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <!-- FINAL SCRIPT TAGS: Using modern Firebase v9 compat libraries -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-functions-compat.js"></script>
     <style>
         /* All your CSS remains the same */
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -398,10 +398,7 @@
         bpm: bpm
     };
 
-    // --- THIS IS THE CRITICAL FIX ---
-    // We must wrap our 'payload' object inside another object with a 'data' key.
-    // This matches the structure the server is expecting.
-    saveScoreFunction({ data: payload })
+    saveScoreFunction(payload)
         .then(() => {
             nameModal.style.display = 'none';
             playerNameInput.value = '';
@@ -476,7 +473,7 @@
             let tapWindowStart = 0;
             let tapWindowEnd = 0;
             let timerStarted = false;
-            let currentDifficulty = 'beginner';
+            //let currentDifficulty = 'beginner';
             let images = {};
             //let notes = [];
             let currentCard = 0;
