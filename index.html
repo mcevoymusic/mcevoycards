@@ -1027,7 +1027,7 @@
             playerNameInput.focus();
         }
         
-        // **MODIFIED** Save score to Firestore via Cloud Function
+                // **MODIFIED** Save score to Firestore via Cloud Function
         function saveScore() {
             const playerName = playerNameInput.value.trim();
             if (!playerName) {
@@ -1038,17 +1038,26 @@
 
             const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
             
-            // Pass the raw event data (tapTimes and difficulty) to the server
-            saveScoreFunction({ 
+            // Create the payload object to be sent
+            const payload = { 
                 name: playerName, 
                 tapTimes: tapTimes,
                 difficulty: currentDifficulty
-            })
+            };
+
+            // --- THIS IS THE NEW DEBUGGING LINE ---
+            // Log the payload to see exactly what is being sent to the server.
+            console.log("Sending this payload to the server:", payload);
+            // ------------------------------------
+
+            saveScoreFunction(payload)
             .then(() => {
                 nameModal.style.display = 'none';
                 playerNameInput.value = '';
                 alert('Score saved successfully!');
-                loadLeaderboard();
+                if (isLeaderboardVisible) { // Only reload if visible
+                    loadLeaderboard();
+                }
             })
             .catch((error) => {
                 console.error("Error saving score:", error);
