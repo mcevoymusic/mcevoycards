@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Rhythms - Enhanced Rhythm Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-functions-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -129,7 +129,7 @@
             border: 1px solid #4a4a8a;
             color: white;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
+            font-size: 1.1rem;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
         }
         
@@ -455,7 +455,8 @@
         @keyframes cardHighlight {
             0% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);}
             50% { box-shadow: 0px 0px 20px 10px rgba(255, 105, 180, 0.5);}
-            100% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);}
+            100% { box-shadow: 0px 0px 10px 
+            10px rgba(255, 105, 180, 1);}
         }
         
         .highlighted-card {
@@ -813,22 +814,18 @@
                         <img src="Playing cards/deal.png" alt="Deal">
                     </button>
                     <button id="replayGameButton" class="fade-button fade-out">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI4IiBmaWxsPSIjZmZkNzAwIj48cGF0aCBkPSJNMTcuNjUgNi4zNUMxNi4yIDQuOSAxNC4yMSA0IDEyIDRjLTQuNDIgMC03Ljk5IDMuNTgtNy45OSA4czMuNTcgOCA3Ljk5IDhjMy43MyAwIDYuODQtMi41NSA3LjczLTZoLTIuMDhjLS44MiAyLjMzLTMuMDQgNC01LjY1IDQtMy4zMSAwLTYtMi42OS02LTZzMi42OS02IDYtNmMxLjY2IDAgMy4xNC42OSA0LjIyIDEuNzhMMTMgMTFoN1Y0bC0yLjM1IDIuMzV6Ii8+PC9zdmc+" alt="Replay">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI4IiBmaWxsPSIjZmZkNzAwIj48cGF0aCBkPSJNMTcuNjUgNi4zNTBDMTYuMiA0LjkgMTQuMjEgNCAxMiA0Yy00LjQyIDAtNy45OSAzLjU4LTcuOTkgOHMzLjU3IDggNy45OSA4YzMuNzMgMCA2Ljg0LTIuNTUgNy43My02aC0yLjA4Yy0uODIgMi4zMy0zLjA0IDQtNS42NSA0LTMuMzEgMC02LTIuNjktNi02czIuNjktNiA2LTZjMS42NiAwIDMuMTQuNjkgNC4yMiAxLjc4TDEzIDExaDdWMDRsLTIuMzUgMi4zNXpNIzI0IDI4Ii8+PC9zdmc+" alt="Replay">
                     </button>
 				</div>
-
             </div>
 			<div class="level-indicator">Level: <span id="levelIndicator">Beginner</span></div>
             <div id="countInDisplay"></div>
             <div class="tap-area-container">
                 <button id="tapButton">TAP</button>
             </div>
-            
-            
         </div>
     </div>
     
-    <!-- New Leaderboard Section -->
     <div class="leaderboard-container">
         <div class="leaderboard-header">
             <h2 class="leaderboard-title">LEADERBOARD</h2>
@@ -897,7 +894,6 @@
         </div>
     </div>
     
-    <!-- Name Input Modal (initially hidden) -->
     <div id="nameModal" class="modal-backdrop" style="display: none;">
         <div class="score-modal">
             <h2 class="modal-title">NEW HIGH SCORE!</h2>
@@ -928,11 +924,11 @@
 		  appId: "1:16967736657:web:e6f9bc9c657716f77b4770",
 		  measurementId: "G-C19K46J8ZS"
 		};
-
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
+        const functions = firebase.functions(); // Initialize Cloud Functions
+
         // Leaderboard functionality
         const leaderboardBody = document.getElementById('leaderboardBody');
         const toggleLeaderboardBtn = document.getElementById('toggleLeaderboard');
@@ -944,8 +940,10 @@
         const finalScoreDisplay = document.getElementById('finalScoreDisplay');
         
         let currentScore = 0;
-        let isLeaderboardVisible = false;
-        
+		let isLeaderboardVisible = false;
+		let tapTimes = []; // This is now in the global scope
+		let currentDifficulty = 'beginner'; // <-- ADD THIS LINE
+
         // Toggle leaderboard visibility
         toggleLeaderboardBtn.addEventListener('click', () => {
             isLeaderboardVisible = !isLeaderboardVisible;
@@ -956,7 +954,7 @@
                 loadLeaderboard();
             }
         });
-        
+
         // Load leaderboard data from Firestore
         function loadLeaderboard() {
             leaderboardBody.innerHTML = `
@@ -966,7 +964,6 @@
                     </td>
                 </tr>
             `;
-            
             db.collection("scores")
                 .orderBy("score", "desc")
                 .limit(10)
@@ -1006,7 +1003,6 @@
                             </td>
                             <td class="score-cell">${data.score.toLocaleString()}</td>
                         `;
-                        
                         leaderboardBody.appendChild(row);
                         rank++;
                     });
@@ -1031,31 +1027,32 @@
             playerNameInput.focus();
         }
         
-        // Save score to Firestore
+        // **MODIFIED** Save score to Firestore via Cloud Function
         function saveScore() {
             const playerName = playerNameInput.value.trim();
-            
             if (!playerName) {
                 playerNameInput.style.borderColor = '#ff6b6b';
                 playerNameInput.placeholder = 'Please enter your name!';
                 return;
             }
+
+            const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
             
-            // Add to Firestore
-            db.collection("scores").add({
-                name: playerName,
-                score: currentScore,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+            // Pass the raw event data (tapTimes and difficulty) to the server
+            saveScoreFunction({ 
+                name: playerName, 
+                tapTimes: tapTimes,
+                difficulty: currentDifficulty
             })
             .then(() => {
                 nameModal.style.display = 'none';
                 playerNameInput.value = '';
                 alert('Score saved successfully!');
-                loadLeaderboard(); // Refresh leaderboard
+                loadLeaderboard();
             })
             .catch((error) => {
                 console.error("Error saving score:", error);
-                alert('Error saving score. Please try again.');
+                alert(`Error saving score: ${error.message}`);
             });
         }
         
@@ -1065,7 +1062,6 @@
             nameModal.style.display = 'none';
             playerNameInput.value = '';
         });
-        
         // Close modal when clicking outside
         nameModal.addEventListener('click', (e) => {
             if (e.target === nameModal) {
@@ -1073,17 +1069,15 @@
                 playerNameInput.value = '';
             }
         });
-        
         // Handle Enter key in name input
         playerNameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 saveScore();
             }
         });
-        
         // Initialize leaderboard
         loadLeaderboard();
-        
+
         // Existing game code below - no changes except for the game over handler
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('gameCanvas');
@@ -1104,15 +1098,14 @@
             // Difficulty multipliers
             const difficultyMultipliers = {
                 'beginner': 1,
-                'beginnerRests': 1.5,
-                'allNotes': 2,
-                'allNotesRests': 2.5,
-                'beginnerNoNumbers': 1.2,
-                'beginnerRestsNoNumbers': 1.7,
-                'allNotesNoNumbers': 2.2,
+                'beginnerRests': 1,
+                'allNotes': 1.5,
+                'allNotesRests': 1.5,
+                'beginnerNoNumbers': 2,
+                'beginnerRestsNoNumbers': 2,
+                'allNotesNoNumbers': 3,
                 'allNotesRestsNoNumbers': 3
             };
-            
             let bpm = 120;
             let beatDuration = 60000 / bpm;
             let countValue;
@@ -1124,7 +1117,6 @@
             let tapWindowEnd = 0;
             let timerStarted = false;
             let currentDifficulty = 'beginner';
-
             let images = {};
             let notes = [];
             let currentCard = 0;
@@ -1133,6 +1125,7 @@
             let countInInterval;
             let cardPositions = [];
             let activeHighlights = [];
+            // let tapTimes = [];
 
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -1158,14 +1151,12 @@
                 
                 score += actualPoints;
                 scoreValue.textContent = score;
-                
                 if (actualPoints > 0) {
                     const perfectText = document.createElement('div');
                     perfectText.className = 'perfect';
                     perfectText.textContent = `+${actualPoints} PERFECT!`;
                     perfectText.style.left = `${Math.random() * 70 + 15}%`;
                     document.body.appendChild(perfectText);
-                    
                     setTimeout(() => {
                         document.body.removeChild(perfectText);
                     }, 1500);
@@ -1179,7 +1170,6 @@
                     clearInterval(timerInterval);
                     gameTime = 5 * 60; // 5 minutes
                     timerValue.textContent = formatTime(gameTime);
-                    
                     timerInterval = setInterval(() => {
                         gameTime--;
                         timerValue.textContent = formatTime(gameTime);
@@ -1213,12 +1203,13 @@
                     setTimeout(() => tapButton.classList.remove('pulse'), 100);
                 }
             });
-
             function handleTap() {
                 if (!isGameActive) return;
-                
                 const now = Date.now();
                 
+                // **MODIFIED** - Log the tap time for server validation
+                tapTimes.push(now);
+
                 if (now >= tapWindowStart && now <= tapWindowEnd) {
                     // Perfect timing (100ms window)
                     updateScore(100);
@@ -1303,7 +1294,6 @@
                     { src: 'NonoRest18.png', counts: 1, silence: true }
                 ]
             };
-
             function preloadImages(difficulty, callback) {
                 images = {};
                 let loaded = 0;
@@ -1320,7 +1310,8 @@
                     };
                     img.onerror = () => {
                         // Fallback to placeholder if image not found
-                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
+                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" 
+                        fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
                         images[card.src] = img;
                         if (++loaded >= total) {
                             callback();
@@ -1337,6 +1328,8 @@
                 currentDifficulty = difficultyDropdown.value;
                 levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
                 
+				tapTimes = []; // <-- ADD THIS LINE to reset the array for the new game
+				
                 if (!timerStarted) {
                     score = 0;
                     scoreValue.textContent = "0";
@@ -1407,7 +1400,6 @@
 
             function animateDealing() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-
                 let anyCardMoving = false;
                 const now = Date.now();
                 
@@ -1425,7 +1417,7 @@
                         
                         // Scale effect (subtle pulse)
                         note.scale = 0.95 + 0.05 * Math.cos(now / 150 + index);
-                        
+                    
                         // Create trail effect (occasionally)
                         if (Math.random() < 0.3) {
                             createCardTrail(note);
@@ -1439,7 +1431,6 @@
                     
                     // Save current context
                     ctx.save();
-                    
                     // Move to card center
                     ctx.translate(
                         note.currentX + note.width / 2,
@@ -1458,7 +1449,6 @@
                         note.width,
                         note.height
                     );
-                    
                     // Restore context
                     ctx.restore();
                 });
@@ -1474,7 +1464,7 @@
                 const trail = document.createElement('div');
                 trail.className = 'card-trail';
                 trail.style.left = `${note.currentX + 370}px`; // Adjust for canvas position
-                trail.style.top = `${note.currentY + 20}px`; // Adjust for canvas position
+                trail.style.top = `${note.currentY + 20}px`;
                 trail.style.width = `${note.width}px`;
                 trail.style.height = `${note.height}px`;
                 document.querySelector('.canvas-container').appendChild(trail);
@@ -1489,10 +1479,9 @@
             function createSparkle(note) {
                 const sparkle = document.createElement('div');
                 sparkle.className = 'card-sparkle';
-                sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`; // Adjust for canvas position
-                sparkle.style.top = `${note.currentY + Math.random() * note.height + 20}px`; // Adjust for canvas position
+                sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`;
+                sparkle.style.top = `${note.currentY + Math.random() * note.height + 20}px`;
                 document.querySelector('.canvas-container').appendChild(sparkle);
-                
                 setTimeout(() => {
                     if (sparkle.parentNode) {
                         sparkle.parentNode.removeChild(sparkle);
@@ -1564,7 +1553,6 @@
                 const masterGain = audioCtx.createGain();
                 masterGain.gain.value = volume * 0.25;
                 masterGain.connect(audioCtx.destination);
-
                 frequencies.forEach(frequency => {
                     const oscillator = audioCtx.createOscillator();
                     const gainNode = audioCtx.createGain();
@@ -1602,7 +1590,6 @@
                 
                 // Create dashes
                 createDashes(dashCount);
-                
                 countInInterval = setInterval(() => {
                     const dashes = document.querySelectorAll('.count-in-dash');
                     dashes.forEach(dash => dash.classList.remove('active'));
@@ -1617,7 +1604,7 @@
                         countInDisplay.innerHTML = '';
                         startDrumBeatAndPlayCards();
                     }
-                }, beatDuration); // Slower count-in
+                }, beatDuration);
             }
 
             function createDashes(count) {
@@ -1636,7 +1623,6 @@
                 const hihatPattern = [1, 1, 1, 1, 1, 1, 1, 1];
                 const clickPattern = [1, 1, 1, 1, 1, 1, 1, 1];
                 let beatIndex = 0;
-
                 function playNextBeat() {
                     if (kickPattern[beatIndex]) playDrumSound('kick');
                     if (snarePattern[beatIndex]) playDrumSound('snare');
@@ -1647,7 +1633,6 @@
 
                 playNextBeat();
                 playCards();
-
                 drumBeatInterval = setInterval(playNextBeat, beatDuration);
             }
 
@@ -1658,30 +1643,28 @@
             function playCards() {
                 if (currentCard < notes.length) {
                     const note = notes[currentCard];
-                    
                     let repeatCount = 0;
                     
                     function playNote() {
                         if (repeatCount < note.repeat) {
                             // Highlight the card for this repeat
                             highlightCard(currentCard, repeatCount);
-                            
                             // Set tap window for this card (wider window - 100ms)
-                            tapWindowStart = Date.now() + 50; // Add small delay for visual sync
-                            tapWindowEnd = tapWindowStart + 100; // 100ms window
+                            tapWindowStart = Date.now() + 50;
+                            // Add small delay for visual sync
+                            tapWindowEnd = tapWindowStart + 100;
+                            // 100ms window
                             
                             if (!note.silence) {
                                 const bassNoteFrequency = getRandomBassNoteFrequency();
                                 const chordFrequencies = Math.random() > 0.5 ? 
                                     generateMajor7thChordFrequencies(bassNoteFrequency) : 
                                     generateMinor9thChordFrequencies(bassNoteFrequency);
-
                                 generate808Bass(bassNoteFrequency, note.duration / 1000, 0.5);
                                 generateChordSound(chordFrequencies, note.duration / 1000, 0.4);
                             }
                             
                             repeatCount++;
-                            
                             // Schedule next repeat or move to next card
                             if (repeatCount < note.repeat) {
                                 setTimeout(playNote, note.duration);
@@ -1704,7 +1687,6 @@
                     playNote();
                 }
             }
-
             
 			function highlightCard(index, repeatIndex) {
 				const note = notes[index];
@@ -1716,7 +1698,6 @@
 				const containerRect = canvasContainer.getBoundingClientRect();
 				const canvasOffsetX = canvasRect.left - containerRect.left;
 				const canvasOffsetY = canvasRect.top - containerRect.top;
-				
 				// Calculate card's center position in container coordinates
 				const cardCenterX = note.currentX + note.width/2 + canvasOffsetX;
 				const cardCenterY = note.currentY + note.height/2 + canvasOffsetY;
@@ -1729,7 +1710,6 @@
 				// Position highlight at card's center
 				highlightDiv.style.left = `${cardCenterX}px`;
 				highlightDiv.style.top = `${cardCenterY}px`;
-				
 				// Apply dimensions based on card's scale
 				const highlightScale = note.scale * 0.92;
 				highlightDiv.style.width = `${note.width * highlightScale}px`;
@@ -1791,7 +1771,6 @@
                             data[i] = Math.random() * 2 - 1;
                         }
                         snareNoise.buffer = buffer;
-
                         const snareGain = audioCtx.createGain();
                         snareNoise.connect(snareGain);
                         snareGain.connect(masterGain);
@@ -1811,7 +1790,6 @@
                         snareOscillator.start(now);
                         snareOscillator.stop(now + 0.1);
                         break;
-
                     case 'hihat':
                         const hiHatNoise = audioCtx.createBufferSource();
                         const hiHatBufferSize = audioCtx.sampleRate;
@@ -1821,7 +1799,6 @@
                             hiHatData[i] = Math.random() * 2 - 1;
                         }
                         hiHatNoise.buffer = hiHatBuffer;
-
                         const hiHatFilter = audioCtx.createBiquadFilter();
                         hiHatFilter.type = 'highpass';
                         hiHatFilter.frequency.setValueAtTime(10000, now);
@@ -1831,14 +1808,12 @@
                         hiHatNoise.connect(hiHatFilter);
                         hiHatFilter.connect(hiHatGain);
                         hiHatGain.connect(masterGain);
-
                         hiHatGain.gain.setValueAtTime(volume * 0.3, now);
                         hiHatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
                         hiHatNoise.start(now);
                         hiHatNoise.stop(now + 0.1);
                         break;
-
                     case 'rim':
                         const rimOscillator = audioCtx.createOscillator();
                         const rimGain = audioCtx.createGain();
@@ -1867,12 +1842,10 @@
 
             startGameButton.addEventListener('click', startGame);
             replayGameButton.addEventListener('click', replayGame);
-            
             // Update level indicator on difficulty change
             difficultyDropdown.addEventListener('change', function() {
                 levelIndicator.textContent = this.options[this.selectedIndex].text;
             });
-            
             // Initialize level indicator
             levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
         });
