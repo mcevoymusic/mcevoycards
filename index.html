@@ -264,7 +264,7 @@
     </div>
 
     <script>
-        // Firebase configuration
+        // Firebase configuration - REPLACE WITH YOUR ACTUAL CONFIG
         const firebaseConfig = {
 		  apiKey: "AIzaSyDUUb8MlBrcf9w7ln6kKbBGEimy8GKblBY",
 		  authDomain: "cards-leaderboard.firebaseapp.com",
@@ -277,16 +277,9 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const functions = firebase.functions();
+        const functions = firebase.functions(); // Initialize Cloud Functions
 
-        // --- GLOBAL GAME STATE VARIABLES ---
-        let currentScore = 0;
-		let isLeaderboardVisible = false;
-		let gameLog = []; // --- MODIFICATION --- Replaced tapTimes with gameLog
-		let currentDifficulty = 'beginner';
-		let notes = [];
-		let bpm = 120;
-        
+        // Leaderboard functionality
         const leaderboardBody = document.getElementById('leaderboardBody');
         const toggleLeaderboardBtn = document.getElementById('toggleLeaderboard');
         const leaderboardContent = document.getElementById('leaderboardContent');
@@ -295,44 +288,90 @@
         const saveScoreBtn = document.getElementById('saveScoreBtn');
         const cancelSaveBtn = document.getElementById('cancelSaveBtn');
         const finalScoreDisplay = document.getElementById('finalScoreDisplay');
+        
+        let currentScore = 0;
+		let isLeaderboardVisible = false;
+		let tapTimes = [];
+		let currentDifficulty = 'beginner';
+		let notes = []; // <-- ADD THIS LINE
+		let bpm = 120; // <-- ADD THIS LINE
 
+        // Toggle leaderboard visibility
         toggleLeaderboardBtn.addEventListener('click', () => {
             isLeaderboardVisible = !isLeaderboardVisible;
             leaderboardContent.classList.toggle('show', isLeaderboardVisible);
             toggleLeaderboardBtn.textContent = isLeaderboardVisible ? 'HIDE LEADERBOARD' : 'SHOW LEADERBOARD';
+            
             if (isLeaderboardVisible) {
                 loadLeaderboard();
             }
         });
 
+        // Load leaderboard data from Firestore
         function loadLeaderboard() {
-            leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 30px; color: #7fdbff;">Loading leaderboard...</td></tr>`;
-            db.collection("scores").orderBy("score", "desc").limit(10).get()
+            leaderboardBody.innerHTML = `
+                <tr>
+                    <td colspan="3" style="text-align: center; padding: 30px; color: #7fdbff;">
+                        Loading leaderboard...
+                    </td>
+                </tr>
+            `;
+            db.collection("scores")
+                .orderBy("score", "desc")
+                .limit(10)
+                .get()
                 .then((querySnapshot) => {
                     if (querySnapshot.empty) {
-                        leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 30px; color: #7fdbff;">No scores yet! Be the first to play!</td></tr>`;
+                        leaderboardBody.innerHTML = `
+                            <tr>
+                                <td colspan="3" style="text-align: center; padding: 30px; color: #7fdbff;">
+                                    No scores yet! Be the first to play!
+                                </td>
+                            </tr>
+                        `;
                         return;
                     }
+                    
                     leaderboardBody.innerHTML = '';
                     let rank = 1;
+                    
                     querySnapshot.forEach((doc) => {
                         const data = doc.data();
                         const row = document.createElement('tr');
+                        
+                        // Add trophy emoji for top 3
                         let rankDisplay = rank;
                         if (rank === 1) rankDisplay = '🥇 1';
                         else if (rank === 2) rankDisplay = '🥈 2';
                         else if (rank === 3) rankDisplay = '🥉 3';
-                        row.innerHTML = `<td class="rank-cell">${rankDisplay}</td><td><div class="player-cell"><div class="player-avatar">${data.name.charAt(0).toUpperCase()}</div>${data.name}</div></td><td class="score-cell">${data.score.toLocaleString()}</td>`;
+                        
+                        row.innerHTML = `
+                            <td class="rank-cell">${rankDisplay}</td>
+                            <td>
+                                <div class="player-cell">
+                                    <div class="player-avatar">${data.name.charAt(0).toUpperCase()}</div>
+                                    ${data.name}
+                                </div>
+                            </td>
+                            <td class="score-cell">${data.score.toLocaleString()}</td>
+                        `;
                         leaderboardBody.appendChild(row);
                         rank++;
                     });
                 })
                 .catch((error) => {
                     console.error("Error loading leaderboard:", error);
-                    leaderboardBody.innerHTML = `<tr><td colspan="3" style="text-align: center; padding: 30px; color: #ff6b6b;">Error loading leaderboard. Please try again later.</td></tr>`;
+                    leaderboardBody.innerHTML = `
+                        <tr>
+                            <td colspan="3" style="text-align: center; padding: 30px; color: #ff6b6b;">
+                                Error loading leaderboard. Please try again later.
+                            </td>
+                        </tr>
+                    `;
                 });
         }
         
+        // Show name input modal
         function showNameModal(score) {
             currentScore = score;
             finalScoreDisplay.textContent = score.toLocaleString();
@@ -340,49 +379,66 @@
             playerNameInput.focus();
         }
         
-	function saveScore() {
-		    const playerName = playerNameInput.value.trim();
-		    if (!playerName) {
-		        playerNameInput.style.borderColor = '#ff6b6b';
-		        playerNameInput.placeholder = 'Please enter your name!';
-		        return;
-		    }
-		
-		    const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
-		
-		    // --- MODIFICATION --- Send the gameLog instead of tapTimes
-		    const payload = {
-		        name: playerName,
-		        notes: notes,
-		        bpm: bpm,
-		        gameLog: gameLog 
-		    };
-		    
-		    // This is the correct call for the v8 SDK
-		    saveScoreFunction(payload)
-		        .then((result) => { // <-- THIS PARAMETER WAS MISSING
-		            nameModal.style.display = 'none';
-		            playerNameInput.value = '';
-		            // The server returns the validated score, which we can show the user
-		            const validatedScore = result.data.score;
-		            alert(`Score of ${validatedScore} saved successfully!`);
-		            if (isLeaderboardVisible) {
-		                loadLeaderboard();
-		            }
-		        })
-		        .catch((error) => {
-		            console.error("Error saving score (from client):", error);
-		            alert(`Error saving score: ${error.message}`);
-		        });
+                // **MODIFIED** Save score to Firestore via Cloud Function
+		function saveScore() {
+		const playerName = playerNameInput.value.trim();
+		if (!playerName) {
+			playerNameInput.style.borderColor = '#ff6b6b';
+			playerNameInput.placeholder = 'Please enter your name!';
+			return;
 		}
+
+		const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
+
+		const payload = {
+			name: playerName,
+			difficulty: currentDifficulty,
+			tapTimes: tapTimes,
+			notes: notes,
+			bpm: bpm
+		};
+
+    // --- THIS IS THE CRITICAL FIX ---
+    // We must wrap our 'payload' object inside another object with a 'data' key.
+    // This matches the structure the server is expecting.
+    saveScoreFunction(payload)
+        .then(() => {
+            nameModal.style.display = 'none';
+            playerNameInput.value = '';
+            alert('Score saved successfully!');
+            if (isLeaderboardVisible) {
+                loadLeaderboard();
+            }
+        })
+        .catch((error) => {
+            console.error("Error saving score:", error);
+            alert(`Error saving score: ${error.message}`);
+        });
+}
         
+        // Event listeners
         saveScoreBtn.addEventListener('click', saveScore);
-        cancelSaveBtn.addEventListener('click', () => { nameModal.style.display = 'none'; playerNameInput.value = ''; });
-        nameModal.addEventListener('click', (e) => { if (e.target === nameModal) { nameModal.style.display = 'none'; playerNameInput.value = ''; } });
-        playerNameInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') { saveScore(); } });
-        
+        cancelSaveBtn.addEventListener('click', () => {
+            nameModal.style.display = 'none';
+            playerNameInput.value = '';
+        });
+        // Close modal when clicking outside
+        nameModal.addEventListener('click', (e) => {
+            if (e.target === nameModal) {
+                nameModal.style.display = 'none';
+                playerNameInput.value = '';
+            }
+        });
+        // Handle Enter key in name input
+        playerNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                saveScore();
+            }
+        });
+        // Initialize leaderboard
         loadLeaderboard();
 
+        // Existing game code below - no changes except for the game over handler
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
@@ -399,42 +455,57 @@
             const levelIndicator = document.getElementById('levelIndicator');
             const canvasContainer = document.querySelector('.canvas-container');
 
+            // Difficulty multipliers
             const difficultyMultipliers = {
-                'beginner': 1, 'beginnerRests': 1, 'allNotes': 1.5, 'allNotesRests': 1.5,
-                'beginnerNoNumbers': 2, 'beginnerRestsNoNumbers': 2, 'allNotesNoNumbers': 3, 'allNotesRestsNoNumbers': 3
+                'beginner': 1,
+                'beginnerRests': 1,
+                'allNotes': 1.5,
+                'allNotesRests': 1.5,
+                'beginnerNoNumbers': 2,
+                'beginnerRestsNoNumbers': 2,
+                'allNotesNoNumbers': 3,
+                'allNotesRestsNoNumbers': 3
             };
-            
+            //let bpm = 120;
             let beatDuration = 60000 / bpm;
+            let countValue;
             let score = 0;
-            let gameTime = 10; // Change this back to 5 * 60 for the full game
+            let gameTime = 10; // 5 minutes in seconds
             let timerInterval;
             let isGameActive = false;
             let tapWindowStart = 0;
             let tapWindowEnd = 0;
             let timerStarted = false;
+            let currentDifficulty = 'beginner';
             let images = {};
+            //let notes = [];
             let currentCard = 0;
             let drumBeatInterval;
             let playCardInterval;
             let countInInterval;
+            let cardPositions = [];
             let activeHighlights = [];
+            // let tapTimes = [];
 
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
+            // Set tempo from slider
             function setTempo() {
                 bpm = parseInt(tempoSlider.value);
                 beatDuration = 60000 / bpm;
             }
 
+            // Update tempo display
             tempoSlider.addEventListener('input', () => {
                 tempoValue.textContent = tempoSlider.value;
                 setTempo();
             });
 
+            // Initialize tempo
             setTempo();
 
+            // Update score display
             function updateScore(points) {
-                // Find the current difficulty multiplier to show the user an estimated score
                 const multiplier = difficultyMultipliers[currentDifficulty] || 1;
                 const actualPoints = Math.round(points * multiplier);
                 
@@ -446,15 +517,18 @@
                     perfectText.textContent = `+${actualPoints} PERFECT!`;
                     perfectText.style.left = `${Math.random() * 70 + 15}%`;
                     document.body.appendChild(perfectText);
-                    setTimeout(() => { document.body.removeChild(perfectText); }, 1500);
+                    setTimeout(() => {
+                        document.body.removeChild(perfectText);
+                    }, 1500);
                 }
             }
 
+            // Start game timer
             function startGameTimer() {
                 if (!timerStarted) {
                     timerStarted = true;
                     clearInterval(timerInterval);
-                    gameTime = 10; // Change this back to 5 * 60 (300 seconds) for the real game
+                    gameTime = 10; // 5 minutes
                     timerValue.textContent = formatTime(gameTime);
                     timerInterval = setInterval(() => {
                         gameTime--;
@@ -465,37 +539,21 @@
                             isGameActive = false;
                             timerStarted = false;
                             stopPlayback();
+                            // Show name modal instead of alert
                             showNameModal(score);
                         }
                     }, 1000);
                 }
             }
 
+            // Format time as MM:SS
             function formatTime(seconds) {
                 const mins = Math.floor(seconds / 60);
                 const secs = seconds % 60;
                 return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
             }
 
-            // --- MODIFICATION --- handleTap now logs a detailed event
-            function handleTap() {
-                if (!isGameActive) return;
-                const now = Date.now();
-                
-                gameLog.push({
-                    event: 'tap',
-                    difficulty: currentDifficulty,
-                    timestamp: now
-                });
-
-                // Client-side scoring remains for visual feedback
-                if (now >= tapWindowStart && now <= tapWindowEnd) {
-                    updateScore(100);
-                } else if (now < tapWindowStart - 100 || now > tapWindowEnd + 100) {
-                    updateScore(-10);
-                }
-            }
-            
+            // Handle tap
             tapButton.addEventListener('click', handleTap);
             document.addEventListener('keydown', (e) => {
                 if (e.code === 'Space') {
@@ -505,33 +563,119 @@
                     setTimeout(() => tapButton.classList.remove('pulse'), 100);
                 }
             });
+            function handleTap() {
+                if (!isGameActive) return;
+                const now = Date.now();
+                
+                // **MODIFIED** - Log the tap time for server validation
+                tapTimes.push(now);
 
+                if (now >= tapWindowStart && now <= tapWindowEnd) {
+                    // Perfect timing (100ms window)
+                    updateScore(100);
+                } else if (now < tapWindowStart - 100 || now > tapWindowEnd + 100) {
+                    // Wrong timing (outside window)
+                    updateScore(-10);
+                }
+            }
+
+            // Original card images
             const imageSources = {
-                'beginner': [ { src: '1.png', counts: 8 }, { src: '12.png', counts: 4 }, { src: '14.png', counts: 2 }, { src: '18x2.png', counts: 1, repeat: 2 } ],
-                'beginnerRests': [ { src: '1.png', counts: 8 }, { src: '12.png', counts: 4 }, { src: '14.png', counts: 2 }, { src: '18x2.png', counts: 1, repeat: 2 }, { src: 'Rest1.png', counts: 8, silence: true }, { src: 'Rest12.png', counts: 4, silence: true }, { src: 'Rest14.png', counts: 2, silence: true } ],
-                'allNotes': [ { src: '1.png', counts: 8 }, { src: '12.png', counts: 4 }, { src: '14.png', counts: 2 }, { src: '18x2.png', counts: 1, repeat: 2 }, { src: '14D.png', counts: 3 }, { src: '18.png', counts: 1 } ],
-                'allNotesRests': [ { src: '1.png', counts: 8 }, { src: '12.png', counts: 4 }, { src: '14.png', counts: 2 }, { src: '18x2.png', counts: 1, repeat: 2 }, { src: '14D.png', counts: 3 }, { src: '18.png', counts: 1 }, { src: 'Rest1.png', counts: 8, silence: true }, { src: 'Rest12.png', counts: 4, silence: true }, { src: 'Rest14.png', counts: 2, silence: true }, { src: 'Rest14D.png', counts: 3, silence: true }, { src: 'Rest18.png', counts: 1, silence: true } ],
-                'beginnerNoNumbers': [ { src: 'Nono1.png', counts: 8 }, { src: 'Nono12.png', counts: 4 }, { src: 'Nono14.png', counts: 2 }, { src: 'Nono18x2.png', counts: 1, repeat: 2 } ],
-                'beginnerRestsNoNumbers': [ { src: 'Nono1.png', counts: 8 }, { src: 'Nono12.png', counts: 4 }, { src: 'Nono14.png', counts: 2 }, { src: 'Nono18x2.png', counts: 1, repeat: 2 }, { src: 'NonoRest1.png', counts: 8, silence: true }, { src: 'NonoRest12.png', counts: 4, silence: true }, { src: 'NonoRest14.png', counts: 2, silence: true } ],
-                'allNotesNoNumbers': [ { src: 'Nono1.png', counts: 8 }, { src: 'Nono12.png', counts: 4 }, { src: 'Nono14.png', counts: 2 }, { src: 'Nono18x2.png', counts: 1, repeat: 2 }, { src: 'Nono14D.png', counts: 3 }, { src: 'Nono18.png', counts: 1 } ],
-                'allNotesRestsNoNumbers': [ { src: 'Nono1.png', counts: 8 }, { src: 'Nono12.png', counts: 4 }, { src: 'Nono14.png', counts: 2 }, { src: 'Nono18x2.png', counts: 1, repeat: 2 }, { src: 'Nono14D.png', counts: 3 }, { src: 'Nono18.png', counts: 1 }, { src: 'NonoRest1.png', counts: 8, silence: true }, { src: 'NonoRest12.png', counts: 4, silence: true }, { src: 'NonoRest14.png', counts: 2, silence: true }, { src: 'NonoRest14D.png', counts: 3, silence: true }, { src: 'NonoRest18.png', counts: 1, silence: true } ]
+                'beginner': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 }
+                ],
+                'beginnerRests': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 },
+                    { src: 'Rest1.png', counts: 8, silence: true },
+                    { src: 'Rest12.png', counts: 4, silence: true },
+                    { src: 'Rest14.png', counts: 2, silence: true }
+                ],
+                'allNotes': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 },
+                    { src: '14D.png', counts: 3 },
+                    { src: '18.png', counts: 1 }
+                ],
+                'allNotesRests': [
+                    { src: '1.png', counts: 8 },
+                    { src: '12.png', counts: 4 },
+                    { src: '14.png', counts: 2 },
+                    { src: '18x2.png', counts: 1, repeat: 2 },
+                    { src: '14D.png', counts: 3 },
+                    { src: '18.png', counts: 1 },
+                    { src: 'Rest1.png', counts: 8, silence: true },
+                    { src: 'Rest12.png', counts: 4, silence: true },
+                    { src: 'Rest14.png', counts: 2, silence: true },
+                    { src: 'Rest14D.png', counts: 3, silence: true },
+                    { src: 'Rest18.png', counts: 1, silence: true }
+                ],
+                'beginnerNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 }
+                ],
+                'beginnerRestsNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 },
+                    { src: 'NonoRest1.png', counts: 8, silence: true },
+                    { src: 'NonoRest12.png', counts: 4, silence: true },
+                    { src: 'NonoRest14.png', counts: 2, silence: true }
+                ],
+                'allNotesNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 },
+                    { src: 'Nono14D.png', counts: 3 },
+                    { src: 'Nono18.png', counts: 1 }
+                ],
+                'allNotesRestsNoNumbers': [
+                    { src: 'Nono1.png', counts: 8 },
+                    { src: 'Nono12.png', counts: 4 },
+                    { src: 'Nono14.png', counts: 2 },
+                    { src: 'Nono18x2.png', counts: 1, repeat: 2 },
+                    { src: 'Nono14D.png', counts: 3 },
+                    { src: 'Nono18.png', counts: 1 },
+                    { src: 'NonoRest1.png', counts: 8, silence: true },
+                    { src: 'NonoRest12.png', counts: 4, silence: true },
+                    { src: 'NonoRest14.png', counts: 2, silence: true },
+                    { src: 'NonoRest14D.png', counts: 3, silence: true },
+                    { src: 'NonoRest18.png', counts: 1, silence: true }
+                ]
             };
-
             function preloadImages(difficulty, callback) {
                 images = {};
                 let loaded = 0;
                 const total = imageSources[difficulty].length;
+                
                 imageSources[difficulty].forEach(card => {
                     let img = new Image();
                     img.src = `Playing cards/${card.src}`;
                     img.onload = () => {
                         images[card.src] = img;
-                        if (++loaded >= total) { callback(); }
+                        if (++loaded >= total) {
+                            callback();
+                        }
                     };
                     img.onerror = () => {
-                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
+                        // Fallback to placeholder if image not found
+                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" 
+                        fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
                         images[card.src] = img;
-                        if (++loaded >= total) { callback(); }
+                        if (++loaded >= total) {
+                            callback();
+                        }
                     };
                 });
             }
@@ -544,7 +688,7 @@
                 currentDifficulty = difficultyDropdown.value;
                 levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
                 
-				gameLog = []; // --- MODIFICATION --- Reset the gameLog for the new game
+				tapTimes = []; // <-- ADD THIS LINE to reset the array for the new game
 				
                 if (!timerStarted) {
                     score = 0;
@@ -553,11 +697,14 @@
                 
                 isGameActive = true;
                 startGameTimer();
+
                 setTempo();
+                countValue = bpm * 2;
 
                 const numberOfCards = parseInt(cardAmountDropdown.value, 10);
                 preloadImages(currentDifficulty, () => {
                     notes = [];
+                    cardPositions = [];
                     const cardWidth = 80;
                     const cardHeight = 120;
                     const totalWidth = numberOfCards * cardWidth;
@@ -565,19 +712,27 @@
 
                     for (let i = 0; i < numberOfCards; i++) {
                         let card = imageSources[currentDifficulty][Math.floor(Math.random() * imageSources[currentDifficulty].length)];
+                        const endX = startX + i * cardWidth;
                         notes.push({
                             image: card.src,
-                            startX: canvas.width + 200, startY: 20,
-                            endX: startX + i * cardWidth, endY: 20,
-                            currentX: canvas.width + 200, currentY: 20,
-                            width: cardWidth, height: cardHeight,
+                            startX: canvas.width + 200,
+                            startY: 20,
+                            endX: endX,
+                            endY: 20,
+                            currentX: canvas.width + 200,
+                            currentY: 20,
+                            width: cardWidth,
+                            height: cardHeight,
                             duration: card.counts * beatDuration,
                             counts: card.counts,
                             repeat: card.repeat || 1,
                             silence: card.silence || false,
-                            rotation: Math.random() * 10 - 5,
+                            rotation: Math.random() * 10 - 5, // Random rotation between -5 and 5 degrees
                             scale: 1,
+                            glow: 0
                         });
+                        // Store final position
+                        cardPositions.push({x: endX, y: 20, width: cardWidth, height: cardHeight});
                     }
                     currentCard = 0;
                     requestAnimationFrame(animateDealing);
@@ -597,6 +752,8 @@
                 clearTimeout(playCardInterval);
                 clearInterval(countInInterval);
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Remove any existing highlights
                 document.querySelectorAll('.highlighted-card').forEach(el => el.remove());
                 activeHighlights = [];
             }
@@ -608,19 +765,51 @@
                 
                 notes.forEach((note, index) => {
                     if (note.currentX > note.endX) {
+                        // Dynamic easing based on card position
                         const progress = 1 - (note.currentX - note.endX) / (canvas.width - note.endX + 200);
                         const speed = 20 + 10 * Math.sin(progress * Math.PI);
+                        
                         note.currentX -= speed;
                         anyCardMoving = true;
+                        
+                        // Rotation effect (oscillate)
                         note.rotation = 5 * Math.sin(now / 100 + index);
+                        
+                        // Scale effect (subtle pulse)
                         note.scale = 0.95 + 0.05 * Math.cos(now / 150 + index);
+                    
+                        // Create trail effect (occasionally)
+                        if (Math.random() < 0.3) {
+                            createCardTrail(note);
+                        }
+                        
+                        // Create sparkle effect (occasionally)
+                        if (Math.random() < 0.1) {
+                            createSparkle(note);
+                        }
                     }
                     
+                    // Save current context
                     ctx.save();
-                    ctx.translate(note.currentX + note.width / 2, note.currentY + note.height / 2);
+                    // Move to card center
+                    ctx.translate(
+                        note.currentX + note.width / 2,
+                        note.currentY + note.height / 2
+                    );
+                    
+                    // Apply rotation and scale
                     ctx.rotate(note.rotation * Math.PI / 180);
                     ctx.scale(note.scale, note.scale);
-                    ctx.drawImage(images[note.image], -note.width / 2, -note.height / 2, note.width, note.height);
+                    
+                    // Draw card
+                    ctx.drawImage(
+                        images[note.image],
+                        -note.width / 2,
+                        -note.height / 2,
+                        note.width,
+                        note.height
+                    );
+                    // Restore context
                     ctx.restore();
                 });
 
@@ -631,25 +820,146 @@
                 }
             }
 
-            function performCountIn() {
-                countInDisplay.innerHTML = '';
-                for (let i = 0; i < 8; i++) {
-                    const dash = document.createElement('div');
-                    dash.className = 'count-in-dash';
-                    dash.textContent = '-';
-                    countInDisplay.appendChild(dash);
-                }
+            function createCardTrail(note) {
+                const trail = document.createElement('div');
+                trail.className = 'card-trail';
+                trail.style.left = `${note.currentX + 370}px`; // Adjust for canvas position
+                trail.style.top = `${note.currentY + 20}px`;
+                trail.style.width = `${note.width}px`;
+                trail.style.height = `${note.height}px`;
+                document.querySelector('.canvas-container').appendChild(trail);
+                
+                setTimeout(() => {
+                    if (trail.parentNode) {
+                        trail.parentNode.removeChild(trail);
+                    }
+                }, 500);
+            }
+            
+            function createSparkle(note) {
+                const sparkle = document.createElement('div');
+                sparkle.className = 'card-sparkle';
+                sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`;
+                sparkle.style.top = `${note.currentY + Math.random() * note.height + 20}px`;
+                document.querySelector('.canvas-container').appendChild(sparkle);
+                setTimeout(() => {
+                    if (sparkle.parentNode) {
+                        sparkle.parentNode.removeChild(sparkle);
+                    }
+                }, 800);
+            }
 
+            function generateMajor7thChordFrequencies(rootFrequency) {
+                const octave = 2;
+                const majorThird = rootFrequency * Math.pow(2, (4 / 12)) * octave;
+                const perfectFifth = rootFrequency * Math.pow(2, (7 / 12)) * octave;
+                const majorSeventh = rootFrequency * Math.pow(2, (11 / 12)) * octave;
+                return [majorThird, perfectFifth, majorSeventh];
+            }
+
+            function generateMinor9thChordFrequencies(rootFrequency) {
+                const octave = 2;
+                const minorThird = rootFrequency * Math.pow(2, (3 / 12)) * octave;
+                const perfectFifth = rootFrequency * Math.pow(2, (7 / 12)) * octave;
+                const minorSeventh = rootFrequency * Math.pow(2, (10 / 12)) * octave;
+                const ninth = rootFrequency * Math.pow(2, (14 / 12)) * octave;
+                return [minorThird, perfectFifth, minorSeventh, ninth];
+            }
+
+            function getRandomBassNoteFrequency() {
+                const notes = [
+                    82.41,
+                    87.31,
+                    92.50,
+                    98.00,
+                    103.83,
+                    110.00,
+                    116.54,
+                    123.47,
+                    130.81,
+                    138.59,
+                    146.83,
+                    155.56,
+                    164.81,
+                    174.61
+                ];
+                const randomIndex = Math.floor(Math.random() * notes.length);
+                return Math.max(notes[randomIndex], 98.00);
+            }
+
+            function generate808Bass(frequency, duration, volume = 1) {
+                const now = audioCtx.currentTime;
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(frequency, now);
+                osc.frequency.exponentialRampToValueAtTime(frequency / 2, now + 0.1);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                gain.gain.setValueAtTime(0, now);
+                gain.gain.linearRampToValueAtTime(volume, now + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.5, now + duration * 0.5);
+                gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                osc.start(now);
+                osc.stop(now + duration);
+            }
+
+            function generateChordSound(frequencies, duration, volume = 1) {
+                const now = audioCtx.currentTime;
+                const masterGain = audioCtx.createGain();
+                masterGain.gain.value = volume * 0.25;
+                masterGain.connect(audioCtx.destination);
+                frequencies.forEach(frequency => {
+                    const oscillator = audioCtx.createOscillator();
+                    const gainNode = audioCtx.createGain();
+
+                    oscillator.connect(gainNode);
+                    gainNode.connect(masterGain);
+
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(frequency, now);
+
+                    const tremolo = audioCtx.createOscillator();
+                    tremolo.frequency.setValueAtTime(5, now);
+                    const tremoloGain = audioCtx.createGain();
+                    tremoloGain.gain.setValueAtTime(0.5, now);
+
+                    tremolo.connect(tremoloGain.gain);
+                    gainNode.connect(tremoloGain);
+                    tremoloGain.connect(masterGain);
+
+                    gainNode.gain.setValueAtTime(0, now);
+                    gainNode.gain.linearRampToValueAtTime(volume * 0.25, now + 0.05);
+                    gainNode.gain.linearRampToValueAtTime(volume * 0.2, now + duration * 0.5);
+                    gainNode.gain.exponentialRampToValueAtTime(0.001, now + duration);
+
+                    oscillator.start(now);
+                    tremolo.start(now);
+                    oscillator.stop(now + duration);
+                    tremolo.stop(now + duration);
+                });
+            }
+
+            function performCountIn() {
+                const dashCount = 8;
                 let currentDash = 0;
+                
+                // Create dashes
+                createDashes(dashCount);
                 countInInterval = setInterval(() => {
                     const dashes = document.querySelectorAll('.count-in-dash');
                     dashes.forEach(dash => dash.classList.remove('active'));
                     
-                    if (currentDash < 8) {
+                    if (currentDash < dashCount) {
                         dashes[currentDash].classList.add('active');
                         playDrumSound('rim', 1.1);
                         currentDash++;
                     } else {
+                        // Count-in complete
                         clearInterval(countInInterval);
                         countInDisplay.innerHTML = '';
                         startDrumBeatAndPlayCards();
@@ -657,87 +967,130 @@
                 }, beatDuration);
             }
 
+            function createDashes(count) {
+                countInDisplay.innerHTML = '';
+                for (let i = 0; i < count; i++) {
+                    const dash = document.createElement('div');
+                    dash.className = 'count-in-dash';
+                    dash.textContent = '-';
+                    countInDisplay.appendChild(dash);
+                }
+            }
+
             function startDrumBeatAndPlayCards() {
                 const kickPattern = [1, 0, 0, 0, 1, 0, 0, 0];
                 const snarePattern = [0, 0, 1, 0, 0, 0, 1, 0];
                 const hihatPattern = [1, 1, 1, 1, 1, 1, 1, 1];
+                const clickPattern = [1, 1, 1, 1, 1, 1, 1, 1];
                 let beatIndex = 0;
-                
                 function playNextBeat() {
                     if (kickPattern[beatIndex]) playDrumSound('kick');
                     if (snarePattern[beatIndex]) playDrumSound('snare');
                     if (hihatPattern[beatIndex]) playDrumSound('hihat');
-                    playDrumSound('rim'); // Metronome click
+                    if (clickPattern[beatIndex]) playDrumSound('rim');
                     beatIndex = (beatIndex + 1) % kickPattern.length;
                 }
+
                 playNextBeat();
                 playCards();
                 drumBeatInterval = setInterval(playNextBeat, beatDuration);
             }
 
+            function stopDrumBeat() {
+                clearInterval(drumBeatInterval);
+            }
+
             function playCards() {
                 if (currentCard < notes.length) {
                     const note = notes[currentCard];
+                    let repeatCount = 0;
                     
                     function playNote() {
-                        highlightCard(currentCard);
-                        tapWindowStart = Date.now();
-                        tapWindowEnd = tapWindowStart + 100;
-                        
-                        if (!note.silence) {
-                            const bassNoteFrequency = getRandomBassNoteFrequency();
-                            const chordFrequencies = Math.random() > 0.5 ? 
-                                generateMajor7thChordFrequencies(bassNoteFrequency) : 
-                                generateMinor9thChordFrequencies(bassNoteFrequency);
-                            generate808Bass(bassNoteFrequency, note.duration / 1000, 0.5);
-                            generateChordSound(chordFrequencies, note.duration / 1000, 0.4);
-                        }
-                        
-                        playCardInterval = setTimeout(() => {
-                            clearHighlight(currentCard);
-                            currentCard++;
-                            if (currentCard < notes.length) {
-                                playCards();
-                            } else {
-                                stopDrumBeat();
-                                fadeInButton(startGameButton);
-                                fadeInButton(replayGameButton);
+                        if (repeatCount < note.repeat) {
+                            // Highlight the card for this repeat
+                            highlightCard(currentCard, repeatCount);
+                            // Set tap window for this card (wider window - 100ms)
+                            tapWindowStart = Date.now() + 50;
+                            // Add small delay for visual sync
+                            tapWindowEnd = tapWindowStart + 100;
+                            // 100ms window
+                            
+                            if (!note.silence) {
+                                const bassNoteFrequency = getRandomBassNoteFrequency();
+                                const chordFrequencies = Math.random() > 0.5 ? 
+                                    generateMajor7thChordFrequencies(bassNoteFrequency) : 
+                                    generateMinor9thChordFrequencies(bassNoteFrequency);
+                                generate808Bass(bassNoteFrequency, note.duration / 1000, 0.5);
+                                generateChordSound(chordFrequencies, note.duration / 1000, 0.4);
                             }
-                        }, note.duration);
+                            
+                            repeatCount++;
+                            // Schedule next repeat or move to next card
+                            if (repeatCount < note.repeat) {
+                                setTimeout(playNote, note.duration);
+                            } else {
+                                setTimeout(() => {
+                                    clearHighlight(currentCard);
+                                    currentCard++;
+                                    if (currentCard < notes.length) {
+                                        playCards();
+                                    } else {
+                                        stopDrumBeat();
+                                        fadeInButton(startGameButton);
+                                        fadeInButton(replayGameButton);
+                                    }
+                                }, note.duration);
+                            }
+                        }
                     }
+                    
                     playNote();
                 }
             }
             
-			function highlightCard(index) {
+			function highlightCard(index, repeatIndex) {
 				const note = notes[index];
 				const canvas = document.getElementById('gameCanvas');
 				const canvasContainer = document.querySelector('.canvas-container');
+				
+				// Get canvas position relative to its container
 				const canvasRect = canvas.getBoundingClientRect();
 				const containerRect = canvasContainer.getBoundingClientRect();
 				const canvasOffsetX = canvasRect.left - containerRect.left;
 				const canvasOffsetY = canvasRect.top - containerRect.top;
+				// Calculate card's center position in container coordinates
 				const cardCenterX = note.currentX + note.width/2 + canvasOffsetX;
 				const cardCenterY = note.currentY + note.height/2 + canvasOffsetY;
 				
+				// Create highlight element
 				const highlightDiv = document.createElement('div');
 				highlightDiv.className = 'highlighted-card';
 				highlightDiv.style.position = 'absolute';
+				
+				// Position highlight at card's center
 				highlightDiv.style.left = `${cardCenterX}px`;
 				highlightDiv.style.top = `${cardCenterY}px`;
+				// Apply dimensions based on card's scale
 				const highlightScale = note.scale * 0.92;
 				highlightDiv.style.width = `${note.width * highlightScale}px`;
 				highlightDiv.style.height = `${note.height * highlightScale}px`;
+				
+				// Apply rotation transformation
 				highlightDiv.style.transform = `translate(-50%, -50%) rotate(${note.rotation}deg)`;
-				highlightDiv.dataset.index = index;
+				
+				highlightDiv.style.pointerEvents = 'none';
+				highlightDiv.style.zIndex = '5';
+				highlightDiv.dataset.index = `${index}-${repeatIndex}`;
 				
 				canvasContainer.appendChild(highlightDiv);
 				activeHighlights.push(highlightDiv);
 			}
 
             function clearHighlight(index) {
+                // Remove all highlights for this card
                 activeHighlights = activeHighlights.filter(highlight => {
-                    if (parseInt(highlight.dataset.index) === index) {
+                    const [cardIndex] = highlight.dataset.index.split('-');
+                    if (parseInt(cardIndex) === index) {
                         if (highlight.parentNode) {
                             highlight.parentNode.removeChild(highlight);
                         }
@@ -759,6 +1112,7 @@
                         const kickGain = audioCtx.createGain();
                         kickOscillator.connect(kickGain);
                         kickGain.connect(masterGain);
+
                         kickOscillator.type = 'sine';
                         kickOscillator.frequency.setValueAtTime(150, now);
                         kickOscillator.frequency.exponentialRampToValueAtTime(0.01, now + 0.5);
@@ -767,24 +1121,30 @@
                         kickOscillator.start(now);
                         kickOscillator.stop(now + 0.5);
                         break;
+
                     case 'snare':
                         const snareNoise = audioCtx.createBufferSource();
                         const bufferSize = audioCtx.sampleRate;
                         const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
                         const data = buffer.getChannelData(0);
-                        for (let i = 0; i < bufferSize; i++) { data[i] = Math.random() * 2 - 1; }
+                        for (let i = 0; i < bufferSize; i++) {
+                            data[i] = Math.random() * 2 - 1;
+                        }
                         snareNoise.buffer = buffer;
                         const snareGain = audioCtx.createGain();
                         snareNoise.connect(snareGain);
                         snareGain.connect(masterGain);
+
                         snareGain.gain.setValueAtTime(volume, now);
                         snareGain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+
                         const snareOscillator = audioCtx.createOscillator();
                         snareOscillator.type = 'triangle';
                         snareOscillator.frequency.setValueAtTime(200, now);
                         snareOscillator.connect(snareGain);
                         snareGain.gain.setValueAtTime(volume, now);
                         snareGain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+
                         snareNoise.start(now);
                         snareNoise.stop(now + 0.2);
                         snareOscillator.start(now);
@@ -795,17 +1155,22 @@
                         const hiHatBufferSize = audioCtx.sampleRate;
                         const hiHatBuffer = audioCtx.createBuffer(1, hiHatBufferSize, audioCtx.sampleRate);
                         const hiHatData = hiHatBuffer.getChannelData(0);
-                        for (let i = 0; i < hiHatBufferSize; i++) { hiHatData[i] = Math.random() * 2 - 1; }
+                        for (let i = 0; i < hiHatBufferSize; i++) {
+                            hiHatData[i] = Math.random() * 2 - 1;
+                        }
                         hiHatNoise.buffer = hiHatBuffer;
                         const hiHatFilter = audioCtx.createBiquadFilter();
                         hiHatFilter.type = 'highpass';
                         hiHatFilter.frequency.setValueAtTime(10000, now);
+                        hiHatFilter.Q.setValueAtTime(1, now);
+
                         const hiHatGain = audioCtx.createGain();
                         hiHatNoise.connect(hiHatFilter);
                         hiHatFilter.connect(hiHatGain);
                         hiHatGain.connect(masterGain);
                         hiHatGain.gain.setValueAtTime(volume * 0.3, now);
                         hiHatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+
                         hiHatNoise.start(now);
                         hiHatNoise.stop(now + 0.1);
                         break;
@@ -814,6 +1179,7 @@
                         const rimGain = audioCtx.createGain();
                         rimOscillator.connect(rimGain);
                         rimGain.connect(masterGain);
+
                         rimOscillator.type = 'square';
                         rimOscillator.frequency.setValueAtTime(2000, now);
                         rimGain.gain.setValueAtTime(volume * 0.1, now);
@@ -824,26 +1190,25 @@
                 }
             }
 
-            function fadeOutButton(button) { button.classList.add('fade-out'); button.classList.remove('fade-in'); }
-            function fadeInButton(button) { button.classList.add('fade-in'); button.classList.remove('fade-out'); }
+            function fadeOutButton(button) {
+                button.classList.add('fade-out');
+                button.classList.remove('fade-in');
+            }
+
+            function fadeInButton(button) {
+                button.classList.add('fade-in');
+                button.classList.remove('fade-out');
+            }
 
             startGameButton.addEventListener('click', startGame);
             replayGameButton.addEventListener('click', replayGame);
-            
-            // --- MODIFICATION --- Log difficulty changes
+            // Update level indicator on difficulty change
             difficultyDropdown.addEventListener('change', function() {
                 levelIndicator.textContent = this.options[this.selectedIndex].text;
-                currentDifficulty = this.value;
-
-                gameLog.push({
-                    event: 'difficultyChange',
-                    difficulty: this.value,
-                    timestamp: Date.now()
-                });
             });
+            // Initialize level indicator
             levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
         });
     </script>
 </body>
 </html>
-
