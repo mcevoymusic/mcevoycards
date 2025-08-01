@@ -380,38 +380,42 @@
         }
         
                 // **MODIFIED** Save score to Firestore via Cloud Function
-		function saveScore() {
-    const playerName = playerNameInput.value.trim();
-    if (!playerName) {
-        playerNameInput.style.borderColor = '#ff6b6b';
-        playerNameInput.placeholder = 'Please enter your name!';
-        return;
-    }
-
-    const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
-
-    const payload = {
-        name: playerName,
-        difficulty: currentDifficulty,
-        tapTimes: tapTimes,
-        notes: notes,
-        bpm: bpm
-    };
-
-    saveScoreFunction(payload)
-        .then(() => {
-            nameModal.style.display = 'none';
-            playerNameInput.value = '';
-            alert('Score saved successfully!');
-            if (isLeaderboardVisible) {
-                loadLeaderboard();
-            }
-        })
-        .catch((error) => {
-            console.error("Error saving score:", error);
-            alert(`Error saving score: ${error.message}`);
-        });
-}
+	function saveScore() {
+	    const playerName = playerNameInput.value.trim();
+	    if (!playerName) {
+	        playerNameInput.style.borderColor = '#ff6b6b';
+	        playerNameInput.placeholder = 'Please enter your name!';
+	        return;
+	    }
+	
+	    const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
+	
+	    const payload = {
+	        name: playerName,
+	        difficulty: currentDifficulty,
+	        tapTimes: tapTimes,
+	        notes: notes,
+	        bpm: bpm
+	    };
+	
+	    // --- NEW DIAGNOSTIC LINE ---
+	    console.log("CLIENT v3: Sending this exact payload:", payload);
+	    // ----------------------------
+	
+	    saveScoreFunction(payload)
+	        .then(() => {
+	            nameModal.style.display = 'none';
+	            playerNameInput.value = '';
+	            alert('Score saved successfully!');
+	            if (isLeaderboardVisible) {
+	                loadLeaderboard();
+	            }
+	        })
+	        .catch((error) => {
+	            console.error("Error saving score (from client):", error);
+	            alert(`Error saving score: ${error.message}`);
+	        });
+	}
         
         // Event listeners
         saveScoreBtn.addEventListener('click', saveScore);
