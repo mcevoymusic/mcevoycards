@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Card Rhythms - Enhanced Rhythm Game</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-functions-compat.js"></script>
     <style>
         * {
             margin: 0;
@@ -941,8 +941,10 @@
         
         let currentScore = 0;
 		let isLeaderboardVisible = false;
-		let tapTimes = []; // This is now in the global scope
-		let currentDifficulty = 'beginner'; // <-- ADD THIS LINE
+		let tapTimes = [];
+		let currentDifficulty = 'beginner';
+		let notes = []; // <-- ADD THIS LINE
+		let bpm = 120; // <-- ADD THIS LINE
 
         // Toggle leaderboard visibility
         toggleLeaderboardBtn.addEventListener('click', () => {
@@ -1028,42 +1030,39 @@
         }
         
                 // **MODIFIED** Save score to Firestore via Cloud Function
-        function saveScore() {
-            const playerName = playerNameInput.value.trim();
-            if (!playerName) {
-                playerNameInput.style.borderColor = '#ff6b6b';
-                playerNameInput.placeholder = 'Please enter your name!';
-                return;
-            }
+		function saveScore() {
+			const playerName = playerNameInput.value.trim();
+			if (!playerName) {
+				playerNameInput.style.borderColor = '#ff6b6b';
+				playerNameInput.placeholder = 'Please enter your name!';
+				return;
+			}
 
-            const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
-            
-            // Create the payload object to be sent
-            const payload = { 
-                name: playerName, 
-                tapTimes: tapTimes,
-                difficulty: currentDifficulty
-            };
+			const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
 
-            // --- THIS IS THE NEW DEBUGGING LINE ---
-            // Log the payload to see exactly what is being sent to the server.
-            console.log("Sending this payload to the server:", payload);
-            // ------------------------------------
+			// The payload now includes everything the server needs to validate the game
+			const payload = {
+				name: playerName,
+				difficulty: currentDifficulty,
+				tapTimes: tapTimes,
+				notes: notes, // <-- ADDED
+				bpm: bpm      // <-- ADDED
+			};
 
-            saveScoreFunction(payload)
-            .then(() => {
-                nameModal.style.display = 'none';
-                playerNameInput.value = '';
-                alert('Score saved successfully!');
-                if (isLeaderboardVisible) { // Only reload if visible
-                    loadLeaderboard();
-                }
-            })
-            .catch((error) => {
-                console.error("Error saving score:", error);
-                alert(`Error saving score: ${error.message}`);
-            });
-        }
+			saveScoreFunction({ data: payload }) // <-- IMPORTANT: Wrap the payload in a 'data' object
+			.then(() => {
+				nameModal.style.display = 'none';
+				playerNameInput.value = '';
+				alert('Score saved successfully!');
+				if (isLeaderboardVisible) {
+					loadLeaderboard();
+				}
+			})
+			.catch((error) => {
+				console.error("Error saving score:", error);
+				alert(`Error saving score: ${error.message}`);
+			});
+		}
         
         // Event listeners
         saveScoreBtn.addEventListener('click', saveScore);
@@ -1115,11 +1114,11 @@
                 'allNotesNoNumbers': 3,
                 'allNotesRestsNoNumbers': 3
             };
-            let bpm = 120;
+            //let bpm = 120;
             let beatDuration = 60000 / bpm;
             let countValue;
             let score = 0;
-            let gameTime = 10; // 5 minutes in seconds
+            let gameTime = 5 * 60; // 5 minutes in seconds
             let timerInterval;
             let isGameActive = false;
             let tapWindowStart = 0;
@@ -1127,7 +1126,7 @@
             let timerStarted = false;
             let currentDifficulty = 'beginner';
             let images = {};
-            let notes = [];
+            //let notes = [];
             let currentCard = 0;
             let drumBeatInterval;
             let playCardInterval;
@@ -1177,7 +1176,7 @@
                 if (!timerStarted) {
                     timerStarted = true;
                     clearInterval(timerInterval);
-                    gameTime = 1 * 10; // 5 minutes
+                    gameTime = 5 * 60; // 5 minutes
                     timerValue.textContent = formatTime(gameTime);
                     timerInterval = setInterval(() => {
                         gameTime--;
