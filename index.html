@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>McEvoy Card</title>
+    <title>McEvoy Cards</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
     <!-- FINAL SCRIPT TAGS: Using stable Firebase v8 -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -175,7 +175,7 @@
             </div>
         </div>
     </div>
-    
+    <!--
     <div class="leaderboard-container">
         <div class="leaderboard-header">
             <h2 class="leaderboard-title">LEADERBOARD</h2>
@@ -200,6 +200,7 @@
             </table>
         </div>
     </div>
+-->
     
     <div class="instructions">
         <h2>HOW TO PLAY</h2>
@@ -295,7 +296,6 @@
 		let currentDifficulty = 'beginner';
 		let notes = []; // <-- ADD THIS LINE
 		let bpm = 120; // <-- ADD THIS LINE
-	    	let gameLog = []; // <-- ADD THIS LINE
 
         // Toggle leaderboard visibility
         toggleLeaderboardBtn.addEventListener('click', () => {
@@ -380,27 +380,24 @@
             playerNameInput.focus();
         }
         
-	function saveScore() {
-	    const playerName = playerNameInput.value.trim();
-	    // ... (rest of the name validation is the same) ...
-	
-	    const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
-	
-	    const payload = {
-	        name: playerName,
-	        notes: notes, // The sequence of cards
-	        bpm: bpm,
-	        gameLog: gameLog // <-- SEND THE EVENT LOG
-	    };
-	
-	    saveScoreFunction(payload)
-	        .then((result) => {
-	            // ... (rest of the success handling is the same) ...
-	        })
-	        .catch((error) => {
-	            // ... (rest of the error handling is the same) ...
-	        });
-	}
+                // **MODIFIED** Save score to Firestore via Cloud Function
+		function saveScore() {
+		const playerName = playerNameInput.value.trim();
+		if (!playerName) {
+			playerNameInput.style.borderColor = '#ff6b6b';
+			playerNameInput.placeholder = 'Please enter your name!';
+			return;
+		}
+
+		const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
+
+		const payload = {
+			name: playerName,
+			difficulty: currentDifficulty,
+			tapTimes: tapTimes,
+			notes: notes,
+			bpm: bpm
+		};
 
     // --- THIS IS THE CRITICAL FIX ---
     // We must wrap our 'payload' object inside another object with a 'data' key.
@@ -567,24 +564,21 @@
                     setTimeout(() => tapButton.classList.remove('pulse'), 100);
                 }
             });
-	function handleTap() {
-	    if (!isGameActive) return;
-	    const now = Date.now();
-	
-	    // **MODIFIED** - Log the tap and the difficulty at the moment of the tap
-	    gameLog.push({
-	        event: 'tap',
-	        difficulty: currentDifficulty,
-	        timestamp: now
-	    });
-	
-	    // The client-side scoring can remain for visual feedback
-	    if (now >= tapWindowStart && now <= tapWindowEnd) {
-	        updateScore(100);
-	    } else if (now < tapWindowStart - 100 || now > tapWindowEnd + 100) {
-	        updateScore(-10);
-	    }
-	}
+            function handleTap() {
+                if (!isGameActive) return;
+                const now = Date.now();
+                
+                // **MODIFIED** - Log the tap time for server validation
+                tapTimes.push(now);
+
+                if (now >= tapWindowStart && now <= tapWindowEnd) {
+                    // Perfect timing (100ms window)
+                    updateScore(100);
+                } else if (now < tapWindowStart - 100 || now > tapWindowEnd + 100) {
+                    // Wrong timing (outside window)
+                    updateScore(-10);
+                }
+            }
 
             // Original card images
             const imageSources = {
@@ -1212,13 +1206,6 @@
             // Update level indicator on difficulty change
             difficultyDropdown.addEventListener('change', function() {
                 levelIndicator.textContent = this.options[this.selectedIndex].text;
-		currentDifficulty = this.value; // Make sure this line exists to update the global var
-
-		        // --- ADD THIS LOGGING BLOCK ---
-	    gameLog.push({
-	        event: 'difficultyChange',
-	        difficulty: this.value,
-	        timestamp: Date.now()
             });
             // Initialize level indicator
             levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
@@ -1226,5 +1213,3 @@
     </script>
 </body>
 </html>
-
-
