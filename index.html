@@ -3,752 +3,103 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>McEvoy Cards - Enhanced Rhythm Game</title>
+    <title>McEvoy Cards</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Lexend+Zetta:wght@400;700&display=swap" rel="stylesheet">
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+    <!-- FINAL SCRIPT TAGS: Using stable Firebase v8 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-functions.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
-            overflow-x: hidden;
-        }
-        
-        header {
-            text-align: center;
-            margin-bottom: 20px;
-            padding: 20px;
-            width: 100%;
-            max-width: 1800px;
-        }
-        
-        h1 {
-            font-size: 3.5rem;
-            color: #FFD700;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
-            margin-bottom: 10px;
-            letter-spacing: 3px;
-            font-weight: 700;
-            font-family: 'Lexend Zetta', sans-serif;
-            background: linear-gradient(to right, #ff8a00, #da1b60);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            position: relative;
-        }
-        
-        .subtitle {
-            color: #7fdbff;
-            font-size: 1.3rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 10px rgba(127, 219, 255, 0.5);
-        }
-        
-        .game-container {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 30px;
-            max-width: 1800px;
-            margin: 0 auto;
-        }
-        
-        .left-panel, .right-panel {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .left-panel {
-            flex: 1;
-            min-width: 550px;
-            max-width: 550px;
-        }
-        
-        .right-panel {
-            flex: 1;
-            min-width: 1000px;
-            max-width: 1000px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        
-        .panel-title {
-            color: #FFD700;
-            font-size: 1.6rem;
-            margin-bottom: 20px;
-            text-align: center;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
-            font-family: 'Lexend Zetta', sans-serif;
-            letter-spacing: 2px;
-        }
-        
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .control-group {
-            background: rgba(30, 30, 50, 0.7);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-        }
-        
-        .control-group label {
-            display: block;
-            margin-bottom: 10px;
-            color: #FFD700;
-            font-size: 1.1rem;
-            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
-        }
-        
-        select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 8px;
-            background: rgba(0, 0, 20, 0.8);
-            border: 1px solid #4a4a8a;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .tempo-control {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 15px;
-            background: rgba(20, 20, 40, 0.8);
-            border-radius: 12px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-        }
-        
-        .tempo-display {
-            font-size: 2.4rem;
-            color: #FFD700;
-            font-weight: bold;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-            margin: 10px 0;
-            text-align: center;
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .tempo-slider {
-            width: 100%;
-            height: 25px;
-            -webkit-appearance: none;
-            background: linear-gradient(to right, #4CAF50, #FFC107, #F44336);
-            border-radius: 12px;
-            outline: none;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        .tempo-slider::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            background: white;
-            border: 3px solid #FF5722;
-            cursor: pointer;
-            box-shadow: 0 0 15px rgba(255, 87, 34, 0.9);
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-        
-        .tempo-slider::-webkit-slider-thumb:hover {
-            transform: scale(1.1);
-            box-shadow: 0 0 20px rgba(255, 87, 34, 1);
-        }
-        
-        .canvas-container {
-            position: relative;
-            width: 850px;
-            height: 300px;
-            margin: 20px auto;
-            background: rgba(0, 0, 0, 0.3);
-            border-radius: 15px;
-            padding: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-        }
-        
-        canvas {
-            display: block;
-            margin: 0 auto;
-            background-color: rgba(0, 0, 0, 0.6);
-            border-radius: 10px;
-            box-shadow: 0 0 25px rgba(0, 0, 0, 0.6);
-        }
-        
-        .buttons-container {
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-            margin-top: 0px;
-            position: relative;
-            width: 100%;
-            height: 150px;
-        }
-        
-        .fade-button {
-            opacity: 1;
-            transition: all 0.3s;
-            background: transparent;
-            border: none;
-            border-radius: 50%;
-            width: 120px;
-            height: 120px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
-            position: absolute;
-            filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.7));
-        }
-        
-        #startGameButton {
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-        }
-        
-        #replayGameButton {
-            left: calc(50% + 140px);
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6));
-        }
-        
-        #startGameButton:hover {
-            filter: drop-shadow(0 0 25px rgba(255, 105, 180, 1));
-        }
-        
-        .fade-button img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        
-        .fade-button.fade-out {
-            opacity: 0;
-            transform: scale(0.8) translateX(-50%);
-            pointer-events: none;
-        }
-        
-        #countInDisplay {
-            height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 15px;
-            margin: 15px 0;
-            font-family: 'Lexend Zetta', sans-serif;
-            font-size: 42px;
-            color: #FFD700;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-            letter-spacing: 5px;
-        }
-        
-        .count-in-dash {
-            opacity: 0.3;
-            transition: all 0.1s ease-out;
-            width: 30px;
-            text-align: center;
-        }
-        
-        .count-in-dash.active {
-            opacity: 1;
-            transform: scale(1.5);
-            text-shadow: 0 0 15px rgba(255, 255, 255, 1);
-            color: #FFF;
-        }
-        
-        .game-stats {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            gap: 20px;
-        }
-        
-        .stat-box {
-            background: rgba(30, 30, 50, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            flex: 1;
-            min-width: 200px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 215, 0, 0.2);
-        }
-        
-        .stat-value {
-            font-size: 3.2rem;
-            color: #FFD700;
-            font-weight: bold;
-            margin: 10px 0;
-            text-shadow: 0 0 12px rgba(255, 215, 0, 0.7);
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .stat-label {
-            font-size: 1.2rem;
-            color: #7fdbff;
-            text-shadow: 0 0 8px rgba(127, 219, 255, 0.5);
-        }
-        
-        .tap-area-container {
-            display: flex;
-            justify-content: center;
-            margin: 30px 0;
-        }
-        
-        #tapButton {
-	        width: 220px;
-            height: 220px;
-            border-radius: 50%;
-            background: radial-gradient(circle, #ff416c, #ff4b2b);
-            border: 6px solid #FFD700;
-            color: white;
-            font-size: 2rem;
-            font-weight: bold;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 0 30px rgba(255, 75, 43, 0.7),
-                        inset 0 0 20px rgba(255, 255, 255, 0.3);
-            transition: all 0.1s;
-            font-family: 'Lexend Zetta', sans-serif;
-            text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
-        }
-        
-        #tapButton:active {
-            transform: scale(0.95);
-            box-shadow: 0 0 20px rgba(255, 75, 43, 0.5),
-                        inset 0 0 30px rgba(0, 0, 0, 0.4);
-        }
-        
-        .instructions {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            max-width: 1800px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .instructions h2 {
-            color: #FFD700;
-            margin-bottom: 20px;
-            text-align: center;
-            font-size: 2.2rem;
-            font-family: 'Lexend Zetta', sans-serif;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-        }
-        
-        .instructions-content {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-        }
-        
-        .instruction-card {
-            background: rgba(30, 30, 50, 0.7);
-            padding: 20px;
-            border-radius: 10px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-        }
-        
-        .instruction-card h3 {
-            color: #FFD700;
-            margin-bottom: 15px;
-            font-size: 1.4rem;
-            text-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
-        }
-        
-        .instruction-card ul {
-            padding-left: 20px;
-        }
-        
-        .instruction-card li {
-            margin-bottom: 10px;
-            line-height: 1.5;
-            color: #e0e0ff;
-        }
-        
-        .footer {
-            margin-top: 20px;
-            color: rgba(255, 255, 255, 0.6);
-            font-size: 0.9rem;
-            text-align: center;
-            padding: 15px;
-            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
-        }
-        
-        .pulse {
-            animation: pulse 0.5s ease-in-out;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.2); }
-            100% { transform: scale(1); }
-        }
-        
-        .perfect {
-            position: absolute;
-            font-size: 2.2rem;
-            font-weight: bold;
-            color: #00ff00;
-            text-shadow: 0 0 15px #00ff00;
-            animation: floatUp 1.5s ease-out;
-            pointer-events: none;
-            z-index: 100;
-			bottom:50%;
-            font-family: 'Lexend Zetta', sans-serif;
-        }
-        
-        @keyframes floatUp {
-            0% { opacity: 1; transform: translateY(0); }
-            100% { opacity: 0; transform: translateY(-120px); }
-        }
-        
-        .level-indicator {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(255, 215, 0, 0.2);
-            border: 2px solid #FFD700;
-            border-radius: 10px;
-            padding: 8px 15px;
-            font-size: 1.2rem;
-            color: #FFD700;
-            text-shadow: 0 0 5px rgba(255, 215, 0, 0.7);
-            font-family: 'Orbitron', sans-serif;
-            z-index: 10;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
-        }
-        
-        /* Card highlight animation */
-        @keyframes cardHighlight {
-            0% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);}
-            50% { box-shadow: 0px 0px 20px 10px rgba(255, 105, 180, 0.5);}
-            100% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);}
-        }
-        
-        .highlighted-card {
-            animation: cardHighlight 4.0s infinite;
-            border-radius: 8px;
-            position: absolute;
-            pointer-events: none;
-            z-index: 5;
-            box-sizing: border-box;
-        }
-        
-        /* Card trail effect */
-        .card-trail {
-            position: absolute;
-            width: 500px;
-            height: 120px;
-            background: rgba(255, 105, 180, 0.2);
-            border-radius: 8px;
-            z-index: -1;
-            pointer-events: none;
-            filter: blur(10px);
-            animation: fadeTrail 0.5s forwards;
-        }
-        
-        @keyframes fadeTrail {
-            0% { opacity: 0.8; transform: scale(1.1); }
-            100% { opacity: 0; transform: scale(1.2); }
-        }
-        
-        /* Card sparkle effect */
-        .card-sparkle {
-            position: absolute;
-            width: 10px;
-            height: 10px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            pointer-events: none;
-            animation: sparkle 0.8s forwards;
-        }
-        
-        @keyframes sparkle {
-            0% { opacity: 1; transform: scale(0.5); }
-            100% { opacity: 0; transform: scale(1.5) translate(20px, -20px); }
-        }
-        
-        /* Deal button glow */
-        .deal-glow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(255, 105, 180, 0.8), rgba(255, 105, 180, 0.2));
-            filter: blur(15px);
-            z-index: -1;
-            transition: all 0.3s;
-        }
-        
-        #startGameButton:hover .deal-glow {
-            width: 140px;
-            height: 140px;
-            filter: blur(20px);
-            background: radial-gradient(circle, rgba(255, 105, 180, 1), rgba(255, 105, 180, 0.4));
-        }
-        
-        /* Leaderboard styles */
-        .leaderboard-container {
-            background: rgba(0, 0, 0, 0.4);
-            border-radius: 15px;
-            padding: 25px;
-            margin: 30px 0;
-            max-width: 1800px;
-            width: 100%;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(5px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .leaderboard-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        
-        .leaderboard-title {
-            color: #FFD700;
-            font-size: 2.2rem;
-            font-family: 'Lexend Zetta', sans-serif;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-        }
-        
-        .leaderboard-toggle {
-            background: rgba(255, 215, 0, 0.2);
-            color: #FFD700;
-            border: 2px solid #FFD700;
-            border-radius: 8px;
-            padding: 10px 20px;
-            font-family: 'Orbitron', sans-serif;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 1.1rem;
-        }
-        
-        .leaderboard-toggle:hover {
-            background: rgba(255, 215, 0, 0.4);
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-        }
-        
-        .leaderboard-content {
-            display: none;
-            background: rgba(30, 30, 50, 0.7);
-            border-radius: 10px;
-            padding: 20px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
-        }
-        
-        .leaderboard-content.show {
-            display: block;
-        }
-        
-        .leaderboard-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .leaderboard-table th {
-            background: rgba(255, 215, 0, 0.2);
-            color: #FFD700;
-            padding: 15px;
-            text-align: left;
-            font-family: 'Orbitron', sans-serif;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .leaderboard-table td {
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            color: #e0e0ff;
-        }
-        
-        .leaderboard-table tr:nth-child(even) {
-            background: rgba(20, 20, 40, 0.3);
-        }
-        
-        .leaderboard-table tr:hover {
-            background: rgba(255, 215, 0, 0.1);
-        }
-        
-        .rank-cell {
-            font-weight: bold;
-            text-align: center;
-            font-size: 1.2rem;
-            color: #FFD700;
-        }
-        
-        .score-cell {
-            font-family: 'Orbitron', sans-serif;
-            font-weight: bold;
-            text-align: right;
-            color: #7fdbff;
-        }
-        
-        .player-cell {
-            display: flex;
-            align-items: center;
-        }
-        
-        .player-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: rgba(255, 215, 0, 0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-            font-weight: bold;
-            color: #FFD700;
-        }
-        
-        /* Name input modal */
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(5px);
-        }
-        
-        .score-modal {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            border-radius: 15px;
-            padding: 30px;
-            width: 90%;
-            max-width: 500px;
-            border: 2px solid #FFD700;
-            box-shadow: 0 0 30px rgba(255, 215, 0, 0.5);
-        }
-        
-        .modal-title {
-            color: #FFD700;
-            text-align: center;
-            margin-bottom: 25px;
-            font-size: 2rem;
-            font-family: 'Lexend Zetta', sans-serif;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.7);
-        }
-        
-        .score-display {
-            font-size: 2.5rem;
-            color: #7fdbff;
-            text-align: center;
-            margin: 20px 0;
-            font-family: 'Orbitron', sans-serif;
-            text-shadow: 0 0 15px rgba(127, 219, 255, 0.7);
-        }
-        
-        .input-group {
-            margin-bottom: 25px;
-        }
-        
-        .input-group label {
-            display: block;
-            margin-bottom: 10px;
-            color: #FFD700;
-            font-family: 'Orbitron', sans-serif;
-        }
-        
-        .input-group input {
-            width: 100%;
-            padding: 15px;
-            border-radius: 8px;
-            background: rgba(0, 0, 20, 0.8);
-            border: 2px solid #4a4a8a;
-            color: white;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            transition: all 0.3s;
-        }
-        
-        .input-group input:focus {
-            outline: none;
-            border-color: #FFD700;
-            box-shadow: 0 0 15px rgba(255, 215, 0, 0.5);
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 15px;
-        }
-        
-        .modal-btn {
-            flex: 1;
-            padding: 15px;
-            border-radius: 8px;
-            border: none;
-            font-family: 'Orbitron', sans-serif;
-            font-size: 1.1rem;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-        
-        .save-btn {
-            background: linear-gradient(to right, #4CAF50, #2E7D32);
-            color: white;
-        }
-        
-        .save-btn:hover {
-            background: linear-gradient(to right, #66BB6A, #388E3C);
-            box-shadow: 0 0 15px rgba(76, 175, 80, 0.6);
-        }
-        
-        .cancel-btn {
-            background: rgba(120, 120, 120, 0.3);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
-        
-        .cancel-btn:hover {
-            background: rgba(150, 150, 150, 0.4);
-            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
-        }
+        /* All your CSS remains the same */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); color: white; font-family: 'Orbitron', sans-serif; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; overflow-x: hidden; }
+        header { text-align: center; margin-bottom: 20px; padding: 20px; width: 100%; max-width: 1800px; }
+        h1 { font-size: 3.5rem; color: #FFD700; text-shadow: 0 0 20px rgba(255, 215, 0, 0.8); margin-bottom: 10px; letter-spacing: 3px; font-weight: 700; font-family: 'Lexend Zetta', sans-serif; background: linear-gradient(to right, #ff8a00, #da1b60); -webkit-background-clip: text; -webkit-text-fill-color: transparent; position: relative; }
+        .subtitle { color: #7fdbff; font-size: 1.3rem; margin-bottom: 20px; text-shadow: 0 0 10px rgba(127, 219, 255, 0.5); }
+        .game-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 30px; max-width: 1800px; margin: 0 auto; }
+        .left-panel, .right-panel { background: rgba(0, 0, 0, 0.4); border-radius: 15px; padding: 25px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .left-panel { flex: 1; min-width: 550px; max-width: 550px; }
+        .right-panel { flex: 1; min-width: 1000px; max-width: 1000px; display: flex; flex-direction: column; align-items: center; }
+        .panel-title { color: #FFD700; font-size: 1.6rem; margin-bottom: 20px; text-align: center; text-shadow: 0 0 10px rgba(255, 215, 0, 0.6); font-family: 'Lexend Zetta', sans-serif; letter-spacing: 2px; }
+        .controls { display: flex; flex-direction: column; gap: 15px; margin-bottom: 20px; }
+        .control-group { background: rgba(30, 30, 50, 0.7); padding: 15px; border-radius: 10px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); }
+        .control-group label { display: block; margin-bottom: 10px; color: #FFD700; font-size: 1.1rem; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+        select { width: 100%; padding: 10px; border-radius: 8px; background: rgba(0, 0, 20, 0.8); border: 1px solid #4a4a8a; color: white; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+        .tempo-control { display: flex; flex-direction: column; gap: 10px; padding: 15px; background: rgba(20, 20, 40, 0.8); border-radius: 12px; box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); }
+        .tempo-display { font-size: 2.4rem; color: #FFD700; font-weight: bold; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); margin: 10px 0; text-align: center; font-family: 'Orbitron', sans-serif; }
+        .tempo-slider { width: 100%; height: 25px; -webkit-appearance: none; background: linear-gradient(to right, #4CAF50, #FFC107, #F44336); border-radius: 12px; outline: none; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+        .tempo-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 35px; height: 35px; border-radius: 50%; background: white; border: 3px solid #FF5722; cursor: pointer; box-shadow: 0 0 15px rgba(255, 87, 34, 0.9); transition: transform 0.2s, box-shadow 0.2s; }
+        .tempo-slider::-webkit-slider-thumb:hover { transform: scale(1.1); box-shadow: 0 0 20px rgba(255, 87, 34, 1); }
+        .canvas-container { position: relative; width: 850px; height: 300px; margin: 20px auto; background: rgba(0, 0, 0, 0.3); border-radius: 15px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4); }
+        canvas { display: block; margin: 0 auto; background-color: rgba(0, 0, 0, 0.6); border-radius: 10px; box-shadow: 0 0 25px rgba(0, 0, 0, 0.6); }
+        .buttons-container { display: flex; justify-content: center; gap: 5px; margin-top: 0px; position: relative; width: 100%; height: 150px; }
+        .fade-button { opacity: 1; transition: all 0.3s; background: transparent; border: none; border-radius: 50%; width: 120px; height: 120px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; position: absolute; filter: drop-shadow(0 0 15px rgba(255, 105, 180, 0.7)); }
+        #startGameButton { left: 50%; transform: translateX(-50%); z-index: 10; }
+        #replayGameButton { left: calc(50% + 140px); filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6)); }
+        #startGameButton:hover { filter: drop-shadow(0 0 25px rgba(255, 105, 180, 1)); }
+        .fade-button img { width: 100%; height: 100%; object-fit: contain; }
+        .fade-button.fade-out { opacity: 0; transform: scale(0.8) translateX(-50%); pointer-events: none; }
+        #countInDisplay { height: 60px; display: flex; justify-content: center; align-items: center; gap: 15px; margin: 15px 0; font-family: 'Lexend Zetta', sans-serif; font-size: 42px; color: #FFD700; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); letter-spacing: 5px; }
+        .count-in-dash { opacity: 0.3; transition: all 0.1s ease-out; width: 30px; text-align: center; }
+        .count-in-dash.active { opacity: 1; transform: scale(1.5); text-shadow: 0 0 15px rgba(255, 255, 255, 1); color: #FFF; }
+        .game-stats { display: flex; justify-content: space-around; margin: 20px 0; gap: 20px; }
+        .stat-box { background: rgba(30, 30, 50, 0.7); padding: 20px; border-radius: 10px; text-align: center; flex: 1; min-width: 200px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 215, 0, 0.2); }
+        .stat-value { font-size: 3.2rem; color: #FFD700; font-weight: bold; margin: 10px 0; text-shadow: 0 0 12px rgba(255, 215, 0, 0.7); font-family: 'Orbitron', sans-serif; }
+        .stat-label { font-size: 1.2rem; color: #7fdbff; text-shadow: 0 0 8px rgba(127, 219, 255, 0.5); }
+        .tap-area-container { display: flex; justify-content: center; margin: 30px 0; }
+        #tapButton { width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, #ff416c, #ff4b2b); border: 6px solid #FFD700; color: white; font-size: 2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px rgba(255, 75, 43, 0.7), inset 0 0 20px rgba(255, 255, 255, 0.3); transition: all 0.1s; font-family: 'Lexend Zetta', sans-serif; text-shadow: 0 0 10px rgba(0, 0, 0, 0.8); }
+        #tapButton:active { transform: scale(0.95); box-shadow: 0 0 20px rgba(255, 75, 43, 0.5), inset 0 0 30px rgba(0, 0, 0, 0.4); }
+        .instructions { background: rgba(0, 0, 0, 0.4); border-radius: 15px; padding: 25px; margin: 30px 0; max-width: 1800px; width: 100%; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .instructions h2 { color: #FFD700; margin-bottom: 20px; text-align: center; font-size: 2.2rem; font-family: 'Lexend Zetta', sans-serif; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); }
+        .instructions-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .instruction-card { background: rgba(30, 30, 50, 0.7); padding: 20px; border-radius: 10px; border: 1px solid rgba(255, 215, 0, 0.2); box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); }
+        .instruction-card h3 { color: #FFD700; margin-bottom: 15px; font-size: 1.4rem; text-shadow: 0 0 5px rgba(255, 215, 0, 0.5); }
+        .instruction-card ul { padding-left: 20px; }
+        .instruction-card li { margin-bottom: 10px; line-height: 1.5; color: #e0e0ff; }
+        .footer { margin-top: 20px; color: rgba(255, 255, 255, 0.6); font-size: 0.9rem; text-align: center; padding: 15px; text-shadow: 0 0 5px rgba(255, 255, 255, 0.3); }
+        .pulse { animation: pulse 0.5s ease-in-out; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.2); } 100% { transform: scale(1); } }
+        .perfect { position: absolute; font-size: 2.2rem; font-weight: bold; color: #00ff00; text-shadow: 0 0 15px #00ff00; animation: floatUp 1.5s ease-out; pointer-events: none; z-index: 100; bottom:50%; font-family: 'Lexend Zetta', sans-serif; }
+        @keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-120px); } }
+        .level-indicator { position: absolute; top: 10px; right: 10px; background: rgba(255, 215, 0, 0.2); border: 2px solid #FFD700; border-radius: 10px; padding: 8px 15px; font-size: 1.2rem; color: #FFD700; text-shadow: 0 0 5px rgba(255, 215, 0, 0.7); font-family: 'Orbitron', sans-serif; z-index: 10; box-shadow: 0 0 10px rgba(0, 0, 0, 0.3); }
+        @keyframes cardHighlight { 0% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);} 50% { box-shadow: 0px 0px 20px 10px rgba(255, 105, 180, 0.5);} 100% { box-shadow: 0px 0px 10px 10px rgba(255, 105, 180, 1);} }
+        .highlighted-card { animation: cardHighlight 4.0s infinite; border-radius: 8px; position: absolute; pointer-events: none; z-index: 5; box-sizing: border-box; }
+        .card-trail { position: absolute; width: 500px; height: 120px; background: rgba(255, 105, 180, 0.2); border-radius: 8px; z-index: -1; pointer-events: none; filter: blur(10px); animation: fadeTrail 0.5s forwards; }
+        @keyframes fadeTrail { 0% { opacity: 0.8; transform: scale(1.1); } 100% { opacity: 0; transform: scale(1.2); } }
+        .card-sparkle { position: absolute; width: 10px; height: 10px; background: rgba(255, 255, 255, 0.8); border-radius: 50%; pointer-events: none; animation: sparkle 0.8s forwards; }
+        @keyframes sparkle { 0% { opacity: 1; transform: scale(0.5); } 100% { opacity: 0; transform: scale(1.5) translate(20px, -20px); } }
+        .deal-glow { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 120px; height: 120px; border-radius: 50%; background: radial-gradient(circle, rgba(255, 105, 180, 0.8), rgba(255, 105, 180, 0.2)); filter: blur(15px); z-index: -1; transition: all 0.3s; }
+        #startGameButton:hover .deal-glow { width: 140px; height: 140px; filter: blur(20px); background: radial-gradient(circle, rgba(255, 105, 180, 1), rgba(255, 105, 180, 0.4)); }
+        .leaderboard-container { background: rgba(0, 0, 0, 0.4); border-radius: 15px; padding: 25px; margin: 30px 0; max-width: 1800px; width: 100%; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); backdrop-filter: blur(5px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .leaderboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .leaderboard-title { color: #FFD700; font-size: 2.2rem; font-family: 'Lexend Zetta', sans-serif; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); }
+        .leaderboard-toggle { background: rgba(255, 215, 0, 0.2); color: #FFD700; border: 2px solid #FFD700; border-radius: 8px; padding: 10px 20px; font-family: 'Orbitron', sans-serif; cursor: pointer; transition: all 0.3s; font-size: 1.1rem; }
+        .leaderboard-toggle:hover { background: rgba(255, 215, 0, 0.4); box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+        .leaderboard-content { display: none; background: rgba(30, 30, 50, 0.7); border-radius: 10px; padding: 20px; border: 1px solid rgba(255, 215, 0, 0.2); box-shadow: 0 0 15px rgba(0, 0, 0, 0.4); }
+        .leaderboard-content.show { display: block; }
+        .leaderboard-table { width: 100%; border-collapse: collapse; }
+        .leaderboard-table th { background: rgba(255, 215, 0, 0.2); color: #FFD700; padding: 15px; text-align: left; font-family: 'Orbitron', sans-serif; text-transform: uppercase; letter-spacing: 1px; }
+        .leaderboard-table td { padding: 12px 15px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); color: #e0e0ff; }
+        .leaderboard-table tr:nth-child(even) { background: rgba(20, 20, 40, 0.3); }
+        .leaderboard-table tr:hover { background: rgba(255, 215, 0, 0.1); }
+        .rank-cell { font-weight: bold; text-align: center; font-size: 1.2rem; color: #FFD700; }
+        .score-cell { font-family: 'Orbitron', sans-serif; font-weight: bold; text-align: right; color: #7fdbff; }
+        .player-cell { display: flex; align-items: center; }
+        .player-avatar { width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 215, 0, 0.3); display: flex; align-items: center; justify-content: center; margin-right: 15px; font-weight: bold; color: #FFD700; }
+        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(5px); }
+        .score-modal { background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 15px; padding: 30px; width: 90%; max-width: 500px; border: 2px solid #FFD700; box-shadow: 0 0 30px rgba(255, 215, 0, 0.5); }
+        .modal-title { color: #FFD700; text-align: center; margin-bottom: 25px; font-size: 2rem; font-family: 'Lexend Zetta', sans-serif; text-shadow: 0 0 10px rgba(255, 215, 0, 0.7); }
+        .score-display { font-size: 2.5rem; color: #7fdbff; text-align: center; margin: 20px 0; font-family: 'Orbitron', sans-serif; text-shadow: 0 0 15px rgba(127, 219, 255, 0.7); }
+        .input-group { margin-bottom: 25px; }
+        .input-group label { display: block; margin-bottom: 10px; color: #FFD700; font-family: 'Orbitron', sans-serif; }
+        .input-group input { width: 100%; padding: 15px; border-radius: 8px; background: rgba(0, 0, 20, 0.8); border: 2px solid #4a4a8a; color: white; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; transition: all 0.3s; }
+        .input-group input:focus { outline: none; border-color: #FFD700; box-shadow: 0 0 15px rgba(255, 215, 0, 0.5); }
+        .modal-buttons { display: flex; gap: 15px; }
+        .modal-btn { flex: 1; padding: 15px; border-radius: 8px; border: none; font-family: 'Orbitron', sans-serif; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; }
+        .save-btn { background: linear-gradient(to right, #4CAF50, #2E7D32); color: white; }
+        .save-btn:hover { background: linear-gradient(to right, #66BB6A, #388E3C); box-shadow: 0 0 15px rgba(76, 175, 80, 0.6); }
+        .cancel-btn { background: rgba(120, 120, 120, 0.3); color: white; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .cancel-btn:hover { background: rgba(150, 150, 150, 0.4); box-shadow: 0 0 10px rgba(255, 255, 255, 0.3); }
     </style>
 </head>
 <body>
@@ -813,22 +164,18 @@
                         <img src="Playing cards/deal.png" alt="Deal">
                     </button>
                     <button id="replayGameButton" class="fade-button fade-out">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI4IiBmaWxsPSIjZmZkNzAwIj48cGF0aCBkPSJNMTcuNjUgNi4zNUMxNi4yIDQuOSAxNC4yMSA0IDEyIDRjLTQuNDIgMC03Ljk5IDMuNTgtNy45OSA4czMuNTcgOCA3Ljk5IDhjMy43MyAwIDYuODQtMi41NSA3LjczLTZoLTIuMDhjLS44MiAyLjMzLTMuMDQgNC01LjY1IDQtMy4zMSAwLTYtMi42OS02LTZzMi42OS02IDYtNmMxLjY2IDAgMy4xNC42OSA0LjIyIDEuNzhMMTMgMTFoN1Y0bC0yLjM1IDIuMzV6Ii8+PC9zdmc+" alt="Replay">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0OCIgaGVpZ2h0PSI0OCIgdmlld0JveD0iMCAwIDI0IDI4IiBmaWxsPSIjZmZkNzAwIj48cGF0aCBkPSJNMTcuNjUgNi4zNTBDMTYuMiA0LjkgMTQuMjEgNCAxMiA0Yy00LjQyIDAtNy45OSAzLjU4LTcuOTkgOHMzLjU3IDggNy45OSA4YzMuNzMgMCA2Ljg0LTIuNTUgNy43My02aC0yLjA4Yy0uODIgMi4zMy0zLjA0IDQtNS42NSA0LTMuMzEgMC02LTIuNjktNi02czIuNjktNiA2LTZjMS42NiAwIDMuMTQuNjkgNC4yMiAxLjc4TDEzIDExaDdWMDRsLTIuMzUgMi4zNXpNIzI0IDI4Ii8+PC9zdmc+" alt="Replay">
                     </button>
 				</div>
-
             </div>
 			<div class="level-indicator">Level: <span id="levelIndicator">Beginner</span></div>
             <div id="countInDisplay"></div>
             <div class="tap-area-container">
                 <button id="tapButton">TAP</button>
             </div>
-            
-            
         </div>
     </div>
     
-    <!-- New Leaderboard Section -->
     <div class="leaderboard-container">
         <div class="leaderboard-header">
             <h2 class="leaderboard-title">LEADERBOARD</h2>
@@ -853,7 +200,7 @@
             </table>
         </div>
     </div>
-	
+    
     <div class="instructions">
         <h2>HOW TO PLAY</h2>
         <div class="instructions-content">
@@ -897,7 +244,6 @@
         </div>
     </div>
     
-    <!-- Name Input Modal (initially hidden) -->
     <div id="nameModal" class="modal-backdrop" style="display: none;">
         <div class="score-modal">
             <h2 class="modal-title">NEW HIGH SCORE!</h2>
@@ -928,11 +274,11 @@
 		  appId: "1:16967736657:web:e6f9bc9c657716f77b4770",
 		  measurementId: "G-C19K46J8ZS"
 		};
-
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        
+        const functions = firebase.functions(); // Initialize Cloud Functions
+
         // Leaderboard functionality
         const leaderboardBody = document.getElementById('leaderboardBody');
         const toggleLeaderboardBtn = document.getElementById('toggleLeaderboard');
@@ -944,8 +290,12 @@
         const finalScoreDisplay = document.getElementById('finalScoreDisplay');
         
         let currentScore = 0;
-        let isLeaderboardVisible = false;
-        
+		let isLeaderboardVisible = false;
+		let tapTimes = [];
+		let currentDifficulty = 'beginner';
+		let notes = []; // <-- ADD THIS LINE
+		let bpm = 120; // <-- ADD THIS LINE
+
         // Toggle leaderboard visibility
         toggleLeaderboardBtn.addEventListener('click', () => {
             isLeaderboardVisible = !isLeaderboardVisible;
@@ -956,7 +306,7 @@
                 loadLeaderboard();
             }
         });
-        
+
         // Load leaderboard data from Firestore
         function loadLeaderboard() {
             leaderboardBody.innerHTML = `
@@ -966,7 +316,6 @@
                     </td>
                 </tr>
             `;
-            
             db.collection("scores")
                 .orderBy("score", "desc")
                 .limit(10)
@@ -1006,7 +355,6 @@
                             </td>
                             <td class="score-cell">${data.score.toLocaleString()}</td>
                         `;
-                        
                         leaderboardBody.appendChild(row);
                         rank++;
                     });
@@ -1031,33 +379,42 @@
             playerNameInput.focus();
         }
         
-        // Save score to Firestore
-        function saveScore() {
-            const playerName = playerNameInput.value.trim();
-            
-            if (!playerName) {
-                playerNameInput.style.borderColor = '#ff6b6b';
-                playerNameInput.placeholder = 'Please enter your name!';
-                return;
+                // **MODIFIED** Save score to Firestore via Cloud Function
+		function saveScore() {
+		const playerName = playerNameInput.value.trim();
+		if (!playerName) {
+			playerNameInput.style.borderColor = '#ff6b6b';
+			playerNameInput.placeholder = 'Please enter your name!';
+			return;
+		}
+
+		const saveScoreFunction = functions.httpsCallable('saveScoreAndValidate');
+
+		const payload = {
+			name: playerName,
+			difficulty: currentDifficulty,
+			tapTimes: tapTimes,
+			notes: notes,
+			bpm: bpm
+		};
+
+    // --- THIS IS THE CRITICAL FIX ---
+    // We must wrap our 'payload' object inside another object with a 'data' key.
+    // This matches the structure the server is expecting.
+    saveScoreFunction(payload)
+        .then(() => {
+            nameModal.style.display = 'none';
+            playerNameInput.value = '';
+            alert('Score saved successfully!');
+            if (isLeaderboardVisible) {
+                loadLeaderboard();
             }
-            
-            // Add to Firestore
-            db.collection("scores").add({
-                name: playerName,
-                score: currentScore,
-                timestamp: firebase.firestore.FieldValue.serverTimestamp()
-            })
-            .then(() => {
-                nameModal.style.display = 'none';
-                playerNameInput.value = '';
-                alert('Score saved successfully!');
-                loadLeaderboard(); // Refresh leaderboard
-            })
-            .catch((error) => {
-                console.error("Error saving score:", error);
-                alert('Error saving score. Please try again.');
-            });
-        }
+        })
+        .catch((error) => {
+            console.error("Error saving score:", error);
+            alert(`Error saving score: ${error.message}`);
+        });
+}
         
         // Event listeners
         saveScoreBtn.addEventListener('click', saveScore);
@@ -1065,7 +422,6 @@
             nameModal.style.display = 'none';
             playerNameInput.value = '';
         });
-        
         // Close modal when clicking outside
         nameModal.addEventListener('click', (e) => {
             if (e.target === nameModal) {
@@ -1073,17 +429,15 @@
                 playerNameInput.value = '';
             }
         });
-        
         // Handle Enter key in name input
         playerNameInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 saveScore();
             }
         });
-        
         // Initialize leaderboard
         loadLeaderboard();
-        
+
         // Existing game code below - no changes except for the game over handler
         document.addEventListener('DOMContentLoaded', function() {
             const canvas = document.getElementById('gameCanvas');
@@ -1104,35 +458,34 @@
             // Difficulty multipliers
             const difficultyMultipliers = {
                 'beginner': 1,
-                'beginnerRests': 1.5,
-                'allNotes': 2,
-                'allNotesRests': 2.5,
-                'beginnerNoNumbers': 1.2,
-                'beginnerRestsNoNumbers': 1.7,
-                'allNotesNoNumbers': 2.2,
+                'beginnerRests': 1,
+                'allNotes': 1.5,
+                'allNotesRests': 1.5,
+                'beginnerNoNumbers': 2,
+                'beginnerRestsNoNumbers': 2,
+                'allNotesNoNumbers': 3,
                 'allNotesRestsNoNumbers': 3
             };
-            
-            let bpm = 120;
+            //let bpm = 120;
             let beatDuration = 60000 / bpm;
             let countValue;
             let score = 0;
-            let gameTime = 5 * 60; // 5 minutes in seconds
+            let gameTime = 10; // 5 minutes in seconds
             let timerInterval;
             let isGameActive = false;
             let tapWindowStart = 0;
             let tapWindowEnd = 0;
             let timerStarted = false;
             let currentDifficulty = 'beginner';
-
             let images = {};
-            let notes = [];
+            //let notes = [];
             let currentCard = 0;
             let drumBeatInterval;
             let playCardInterval;
             let countInInterval;
             let cardPositions = [];
             let activeHighlights = [];
+            // let tapTimes = [];
 
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -1158,14 +511,12 @@
                 
                 score += actualPoints;
                 scoreValue.textContent = score;
-                
                 if (actualPoints > 0) {
                     const perfectText = document.createElement('div');
                     perfectText.className = 'perfect';
                     perfectText.textContent = `+${actualPoints} PERFECT!`;
                     perfectText.style.left = `${Math.random() * 70 + 15}%`;
                     document.body.appendChild(perfectText);
-                    
                     setTimeout(() => {
                         document.body.removeChild(perfectText);
                     }, 1500);
@@ -1177,9 +528,8 @@
                 if (!timerStarted) {
                     timerStarted = true;
                     clearInterval(timerInterval);
-                    gameTime = 5 * 60; // 5 minutes
+                    gameTime = 10; // 5 minutes
                     timerValue.textContent = formatTime(gameTime);
-                    
                     timerInterval = setInterval(() => {
                         gameTime--;
                         timerValue.textContent = formatTime(gameTime);
@@ -1213,12 +563,13 @@
                     setTimeout(() => tapButton.classList.remove('pulse'), 100);
                 }
             });
-
             function handleTap() {
                 if (!isGameActive) return;
-                
                 const now = Date.now();
                 
+                // **MODIFIED** - Log the tap time for server validation
+                tapTimes.push(now);
+
                 if (now >= tapWindowStart && now <= tapWindowEnd) {
                     // Perfect timing (100ms window)
                     updateScore(100);
@@ -1303,7 +654,6 @@
                     { src: 'NonoRest18.png', counts: 1, silence: true }
                 ]
             };
-
             function preloadImages(difficulty, callback) {
                 images = {};
                 let loaded = 0;
@@ -1320,7 +670,8 @@
                     };
                     img.onerror = () => {
                         // Fallback to placeholder if image not found
-                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
+                        img.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="120" viewBox="0 0 80 120"><rect width="80" height="120" rx="10" ry="10" 
+                        fill="%23333" stroke="%23FFD700" stroke-width="2"/><text x="40" y="60" font-family="Arial" font-size="14" fill="%23FFD700" text-anchor="middle" dominant-baseline="middle">${card.src.replace('.png', '')}</text></svg>`;
                         images[card.src] = img;
                         if (++loaded >= total) {
                             callback();
@@ -1337,6 +688,8 @@
                 currentDifficulty = difficultyDropdown.value;
                 levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
                 
+				tapTimes = []; // <-- ADD THIS LINE to reset the array for the new game
+				
                 if (!timerStarted) {
                     score = 0;
                     scoreValue.textContent = "0";
@@ -1407,7 +760,6 @@
 
             function animateDealing() {
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
-
                 let anyCardMoving = false;
                 const now = Date.now();
                 
@@ -1425,7 +777,7 @@
                         
                         // Scale effect (subtle pulse)
                         note.scale = 0.95 + 0.05 * Math.cos(now / 150 + index);
-                        
+                    
                         // Create trail effect (occasionally)
                         if (Math.random() < 0.3) {
                             createCardTrail(note);
@@ -1439,7 +791,6 @@
                     
                     // Save current context
                     ctx.save();
-                    
                     // Move to card center
                     ctx.translate(
                         note.currentX + note.width / 2,
@@ -1458,7 +809,6 @@
                         note.width,
                         note.height
                     );
-                    
                     // Restore context
                     ctx.restore();
                 });
@@ -1474,7 +824,7 @@
                 const trail = document.createElement('div');
                 trail.className = 'card-trail';
                 trail.style.left = `${note.currentX + 370}px`; // Adjust for canvas position
-                trail.style.top = `${note.currentY + 20}px`; // Adjust for canvas position
+                trail.style.top = `${note.currentY + 20}px`;
                 trail.style.width = `${note.width}px`;
                 trail.style.height = `${note.height}px`;
                 document.querySelector('.canvas-container').appendChild(trail);
@@ -1489,10 +839,9 @@
             function createSparkle(note) {
                 const sparkle = document.createElement('div');
                 sparkle.className = 'card-sparkle';
-                sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`; // Adjust for canvas position
-                sparkle.style.top = `${note.currentY + Math.random() * note.height + 20}px`; // Adjust for canvas position
+                sparkle.style.left = `${note.currentX + Math.random() * note.width + 370}px`;
+                sparkle.style.top = `${note.currentY + Math.random() * note.height + 20}px`;
                 document.querySelector('.canvas-container').appendChild(sparkle);
-                
                 setTimeout(() => {
                     if (sparkle.parentNode) {
                         sparkle.parentNode.removeChild(sparkle);
@@ -1564,7 +913,6 @@
                 const masterGain = audioCtx.createGain();
                 masterGain.gain.value = volume * 0.25;
                 masterGain.connect(audioCtx.destination);
-
                 frequencies.forEach(frequency => {
                     const oscillator = audioCtx.createOscillator();
                     const gainNode = audioCtx.createGain();
@@ -1602,7 +950,6 @@
                 
                 // Create dashes
                 createDashes(dashCount);
-                
                 countInInterval = setInterval(() => {
                     const dashes = document.querySelectorAll('.count-in-dash');
                     dashes.forEach(dash => dash.classList.remove('active'));
@@ -1617,7 +964,7 @@
                         countInDisplay.innerHTML = '';
                         startDrumBeatAndPlayCards();
                     }
-                }, beatDuration); // Slower count-in
+                }, beatDuration);
             }
 
             function createDashes(count) {
@@ -1636,7 +983,6 @@
                 const hihatPattern = [1, 1, 1, 1, 1, 1, 1, 1];
                 const clickPattern = [1, 1, 1, 1, 1, 1, 1, 1];
                 let beatIndex = 0;
-
                 function playNextBeat() {
                     if (kickPattern[beatIndex]) playDrumSound('kick');
                     if (snarePattern[beatIndex]) playDrumSound('snare');
@@ -1647,7 +993,6 @@
 
                 playNextBeat();
                 playCards();
-
                 drumBeatInterval = setInterval(playNextBeat, beatDuration);
             }
 
@@ -1658,30 +1003,28 @@
             function playCards() {
                 if (currentCard < notes.length) {
                     const note = notes[currentCard];
-                    
                     let repeatCount = 0;
                     
                     function playNote() {
                         if (repeatCount < note.repeat) {
                             // Highlight the card for this repeat
                             highlightCard(currentCard, repeatCount);
-                            
                             // Set tap window for this card (wider window - 100ms)
-                            tapWindowStart = Date.now() + 50; // Add small delay for visual sync
-                            tapWindowEnd = tapWindowStart + 100; // 100ms window
+                            tapWindowStart = Date.now() + 50;
+                            // Add small delay for visual sync
+                            tapWindowEnd = tapWindowStart + 100;
+                            // 100ms window
                             
                             if (!note.silence) {
                                 const bassNoteFrequency = getRandomBassNoteFrequency();
                                 const chordFrequencies = Math.random() > 0.5 ? 
                                     generateMajor7thChordFrequencies(bassNoteFrequency) : 
                                     generateMinor9thChordFrequencies(bassNoteFrequency);
-
                                 generate808Bass(bassNoteFrequency, note.duration / 1000, 0.5);
                                 generateChordSound(chordFrequencies, note.duration / 1000, 0.4);
                             }
                             
                             repeatCount++;
-                            
                             // Schedule next repeat or move to next card
                             if (repeatCount < note.repeat) {
                                 setTimeout(playNote, note.duration);
@@ -1704,7 +1047,6 @@
                     playNote();
                 }
             }
-
             
 			function highlightCard(index, repeatIndex) {
 				const note = notes[index];
@@ -1716,7 +1058,6 @@
 				const containerRect = canvasContainer.getBoundingClientRect();
 				const canvasOffsetX = canvasRect.left - containerRect.left;
 				const canvasOffsetY = canvasRect.top - containerRect.top;
-				
 				// Calculate card's center position in container coordinates
 				const cardCenterX = note.currentX + note.width/2 + canvasOffsetX;
 				const cardCenterY = note.currentY + note.height/2 + canvasOffsetY;
@@ -1729,7 +1070,6 @@
 				// Position highlight at card's center
 				highlightDiv.style.left = `${cardCenterX}px`;
 				highlightDiv.style.top = `${cardCenterY}px`;
-				
 				// Apply dimensions based on card's scale
 				const highlightScale = note.scale * 0.92;
 				highlightDiv.style.width = `${note.width * highlightScale}px`;
@@ -1791,7 +1131,6 @@
                             data[i] = Math.random() * 2 - 1;
                         }
                         snareNoise.buffer = buffer;
-
                         const snareGain = audioCtx.createGain();
                         snareNoise.connect(snareGain);
                         snareGain.connect(masterGain);
@@ -1811,7 +1150,6 @@
                         snareOscillator.start(now);
                         snareOscillator.stop(now + 0.1);
                         break;
-
                     case 'hihat':
                         const hiHatNoise = audioCtx.createBufferSource();
                         const hiHatBufferSize = audioCtx.sampleRate;
@@ -1821,7 +1159,6 @@
                             hiHatData[i] = Math.random() * 2 - 1;
                         }
                         hiHatNoise.buffer = hiHatBuffer;
-
                         const hiHatFilter = audioCtx.createBiquadFilter();
                         hiHatFilter.type = 'highpass';
                         hiHatFilter.frequency.setValueAtTime(10000, now);
@@ -1831,14 +1168,12 @@
                         hiHatNoise.connect(hiHatFilter);
                         hiHatFilter.connect(hiHatGain);
                         hiHatGain.connect(masterGain);
-
                         hiHatGain.gain.setValueAtTime(volume * 0.3, now);
                         hiHatGain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
 
                         hiHatNoise.start(now);
                         hiHatNoise.stop(now + 0.1);
                         break;
-
                     case 'rim':
                         const rimOscillator = audioCtx.createOscillator();
                         const rimGain = audioCtx.createGain();
@@ -1867,18 +1202,13 @@
 
             startGameButton.addEventListener('click', startGame);
             replayGameButton.addEventListener('click', replayGame);
-            
             // Update level indicator on difficulty change
             difficultyDropdown.addEventListener('change', function() {
                 levelIndicator.textContent = this.options[this.selectedIndex].text;
             });
-            
             // Initialize level indicator
             levelIndicator.textContent = difficultyDropdown.options[difficultyDropdown.selectedIndex].text;
         });
     </script>
 </body>
 </html>
-
-
-
